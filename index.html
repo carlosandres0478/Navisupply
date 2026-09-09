@@ -658,6 +658,84 @@
             font-size: 14px;
             margin-bottom: 6px;
         }
+        .review-title {
+            font-size: 26px;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .review-card {
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            animation: fadeIn 0.4s ease;
+        }
+        .review-card .card-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .review-card .card-body {
+            font-size: 16px;
+            line-height: 1.65;
+            opacity: 0.95;
+        }
+        .review-concept {
+            background: rgba(33, 150, 243, 0.08);
+            border-color: rgba(33, 150, 243, 0.3);
+        }
+        .review-concept .card-label {
+            color: #4fa8f5;
+        }
+        .review-example {
+            background: rgba(255, 152, 0, 0.08);
+            border-color: rgba(255, 152, 0, 0.3);
+        }
+        .review-example .card-label {
+            color: #ff9800;
+        }
+        .review-formula {
+            background: rgba(156, 39, 176, 0.08);
+            border-color: rgba(156, 39, 176, 0.3);
+        }
+        .review-formula .card-label {
+            color: #ba68c8;
+        }
+        .review-formula .card-body {
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .review-progress {
+            display: flex;
+            gap: 4px;
+            margin: 14px 0 22px;
+            flex-wrap: wrap;
+        }
+        .review-progress .dot {
+            height: 6px;
+            flex: 1;
+            min-width: 8px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.3s;
+        }
+        .review-progress .dot.done {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+        .review-progress .dot.current {
+            background: #fff;
+        }
         .review-controls {
             display: flex;
             gap: 10px;
@@ -759,19 +837,31 @@
             <div class="question-header">
                 <span class="question-number" id="reviewNumber">Repaso 1 / 20</span>
             </div>
-            <div class="question-text" id="reviewQuestionText">Cargando...</div>
-            <div class="question-options" id="reviewOptions"></div>
-            <div class="review-answer-box">
-                <div class="label" id="reviewCorrectLabel">✅ Respuesta correcta</div>
-                <div class="explanation" id="reviewExplanation"></div>
+            <div class="review-progress" id="reviewProgress"></div>
+            <div class="review-title" id="reviewTitle">Cargando...</div>
+
+            <div class="review-card review-concept">
+                <div class="card-label">💡 Concepto</div>
+                <div class="card-body" id="reviewConcept"></div>
             </div>
+
+            <div class="review-card review-formula hidden" id="reviewFormulaCard">
+                <div class="card-label">🧮 Fórmula</div>
+                <div class="card-body" id="reviewFormula"></div>
+            </div>
+
+            <div class="review-card review-example">
+                <div class="card-label">📊 Ejemplo aplicado</div>
+                <div class="card-body" id="reviewExample"></div>
+            </div>
+
             <div id="presenterReviewControls" class="review-controls hidden">
                 <button class="btn-outline" onclick="reviewPrev()">⬅️ Anterior</button>
                 <button class="btn-outline" onclick="skipReview()">⏭️ Saltar repaso</button>
                 <button class="btn-primary" id="reviewNextBtn" onclick="reviewNext()" style="margin-top:0;">Siguiente ➡️</button>
             </div>
             <div id="playerReviewStatus" class="text-center mt-20 hidden">
-                <span style="opacity:0.7;">📖 El presentador está repasando el contenido contigo...</span>
+                <span style="opacity:0.7;">📖 El presentador está explicando este concepto contigo...</span>
             </div>
         </div>
 
@@ -1403,6 +1493,219 @@
             explanation: 'El análisis de causa raíz busca la razón de fondo de un problema para corregirlo de forma definitiva, no solo su efecto visible.'
         }];
 
+        // ============================================================
+        //  CONTENIDO DE ENSEÑANZA (repaso previo al juego)
+        //  Un elemento por cada pregunta de QUESTIONS, en el mismo orden.
+        // ============================================================
+        const TEACHING_CONTENT = [
+        {
+            title: 'El objetivo real de un pronóstico de demanda',
+            explain: 'El forecast no busca adivinar la cifra exacta de venta, sino anticipar el comportamiento futuro de la demanda usando el historial y las señales disponibles (tendencia, estacionalidad, promociones) para tomar mejores decisiones de compra.',
+            example: 'Si el filtro de aceite FA-2201 vendió en promedio 40 unidades/mes en los últimos 6 meses con leve tendencia al alza, el forecast no dirá "venderás 42.7 unidades exactas": estimará un rango razonable (38-46) para dimensionar cuánto comprar el próximo mes.'
+        }, {
+            title: 'Ventas en cero: investigar antes de asumir',
+            explain: 'Cuando un SKU muestra ventas en cero durante varios meses, NO se debe asumir automáticamente que no hay demanda. Puede deberse a quiebre de stock (stockout), descontinuación del proveedor, cambio de código de referencia, o un error de registro.',
+            example: 'La pastilla de freno PF-118 muestra cero ventas en los últimos 3 meses. Al revisar, el planeador descubre que el SKU tuvo un stockout desde hace 4 meses: la demanda seguía existiendo, solo no se pudo atender. Concluir "no hay demanda" habría sido un error costoso.'
+        }, {
+            title: 'ADU: el consumo promedio diario',
+            explain: 'ADU (Average Daily Usage) es el consumo promedio diario de un SKU. Es la base de casi todos los cálculos de buffer e inventario en DDMRP.',
+            example: 'Si un repuesto vendió 600 unidades en los últimos 30 días, su ADU = 600 ÷ 30 = 20 unidades/día.',
+            formula: 'ADU = Consumo total del período ÷ Días del período'
+        }, {
+            title: 'Cálculo de la Zona Amarilla',
+            explain: 'La Zona Amarilla representa el consumo esperado durante el Lead Time: cuánto inventario se necesita para cubrir el período mientras llega la próxima orden de compra.',
+            example: 'ADU = 20 unidades/día, Lead Time = 30 días → Zona Amarilla ≈ 20 × 30 = 600 unidades. Ese es el inventario que debe cubrir el consumo mientras se espera la reposición.',
+            formula: 'Zona Amarilla ≈ ADU × Lead Time'
+        }, {
+            title: 'Qué representa la Zona Amarilla',
+            explain: 'La Zona Amarilla es el "colchón de tiempo" del buffer: cubre el consumo normal mientras el pedido de reposición está en camino, sin contar variabilidad extra (eso lo cubre la Zona Roja).',
+            example: 'Si el Lead Time de un repuesto importado es de 90 días y el ADU es 5 unidades/día, la Zona Amarilla cubre 450 unidades: el inventario mínimo para no quedarse sin stock mientras llega el próximo contenedor.'
+        }, {
+            title: 'Bias: el forecast sesgado',
+            explain: 'El Bias mide si el forecast tiende sistemáticamente a sobreestimar o subestimar la demanda real, a diferencia de otros indicadores que solo miden la magnitud del error sin dirección.',
+            example: 'Si durante 6 meses seguidos el forecast de un SKU siempre predijo menos de lo que realmente se vendió, el Bias será negativo y persistente: señal de que el modelo necesita ajustarse al alza, no solo de que "hubo errores aleatorios".'
+        }, {
+            title: 'WAPE: error ponderado por volumen',
+            explain: 'El WAPE (Weighted Absolute Percentage Error) mide el error del forecast ponderado por volumen, dando más peso a los SKU de mayor venta. Un WAPE alto indica que, en conjunto, el forecast se aleja bastante de la demanda real.',
+            example: 'Si el WAPE del mes es 35%, significa que en promedio (ponderado por volumen) el forecast erró en un tercio del volumen total: una señal de alerta para revisar el modelo antes de confiar en las recomendaciones de compra.'
+        }, {
+            title: 'Un solo modelo no sirve para todos los SKU',
+            explain: 'No todos los SKU se comportan igual: unos tienen demanda estable, otros estacional, otros intermitente. Usar un único modelo para todos ignora esas diferencias y produce forecasts pobres para muchas referencias.',
+            example: 'Un filtro de aceite de alta rotación se comporta distinto a un sensor específico de un solo modelo de camión: el primero puede usar un promedio móvil simple, el segundo necesita un enfoque distinto o revisión manual.'
+        }, {
+            title: 'Demanda intermitente',
+            explain: 'La demanda intermitente se caracteriza por muchos períodos sin ventas, intercalados con consumos puntuales, típica de repuestos de baja rotación o repuestos críticos de equipos específicos.',
+            example: 'Un repuesto especializado que solo se vende 3-4 veces al año, en cantidades variables, es un caso clásico de demanda intermitente: los modelos de forecast tradicionales (que asumen continuidad) fallan mucho con este patrón.'
+        }, {
+            title: 'El verdadero objetivo de la planeación de inventario',
+            explain: 'El objetivo no es minimizar ni maximizar el inventario por sí mismo, sino alcanzar el nivel de servicio requerido usando el capital de la forma más eficiente posible.',
+            example: 'Tener cero quiebres de stock comprando el triple de lo necesario no es "buena planeación", es ineficiente. La meta es el balance: buen servicio al cliente con el capital justo invertido en inventario.'
+        }, {
+            title: 'Lead Time más largo, Zona Amarilla más grande',
+            explain: 'Como la Zona Amarilla = ADU × Lead Time, cualquier aumento del Lead Time incrementa directamente el inventario necesario para cubrir ese período, incluso si la demanda no cambia.',
+            example: 'ADU=20, LT=100 → Zona Amarilla=2.000. Si el proveedor extiende el Lead Time a 150 días, la Zona Amarilla sube a 3.000: 1.000 unidades más de inventario, sin que haya cambiado la demanda.',
+            formula: 'Zona Amarilla = ADU × LT (a mayor LT, mayor Zona Amarilla)'
+        }, {
+            title: 'Pocas órdenes de compra = Lead Time poco confiable',
+            explain: 'El Lead Time calculado con muy pocas órdenes de compra históricas es una muestra estadísticamente pequeña: puede no representar el comportamiento real del proveedor y llevar a decisiones erradas.',
+            example: 'Si solo existen 2 órdenes de compra históricas con tiempos de 45 y 200 días, calcular un "Lead Time promedio de 122 días" y confiar plenamente en él es arriesgado: la muestra es demasiado pequeña para ser representativa.'
+        }, {
+            title: 'Percentiles con muestras muy pequeñas',
+            explain: 'Con solo 2 observaciones no se puede calcular un percentil confiable (como un P90). Se necesita un volumen mínimo de datos para que la estadística tenga sentido real.',
+            example: 'Calcular un "P90 = 125 días" a partir de solo 2 órdenes de compra da una falsa sensación de precisión: en la práctica, ese número no es más confiable que promediar esas dos cifras a ojo.'
+        }, {
+            title: 'Proveedor estable vs. proveedor variable',
+            explain: 'Dos proveedores pueden tener el mismo Lead Time promedio, pero uno con entregas siempre puntuales (baja variabilidad) es mucho más predecible que otro con un rango amplio de entrega (alta incertidumbre de suministro).',
+            example: 'Proveedor A entrega siempre en 120 días fijos. Proveedor B entrega entre 60 y 180 días. Aunque el promedio de B también sea ~120 días, su variabilidad exige mucho más inventario de protección que el de A.'
+        }, {
+            title: 'CV: el Coeficiente de Variación',
+            explain: 'El CV mide la variabilidad relativa de un dato (como el Lead Time) respecto a su promedio, y permite comparar la incertidumbre de proveedores distintos aunque tengan Lead Times de tamaños diferentes.',
+            example: 'Un proveedor con Lead Time promedio de 30 días y desviación de 6 días tiene CV=0.20 (20%). Otro con promedio de 120 días y desviación de 12 días tiene CV=0.10 (10%): aunque su Lead Time es mayor, es proporcionalmente MÁS estable.',
+            formula: 'CV = Desviación estándar ÷ Promedio'
+        }, {
+            title: 'Cuidado al interpretar el FactorVar',
+            explain: 'El FactorVar puede estar reflejando volatilidad de la DEMANDA y no necesariamente del Lead Time: confundir ambas fuentes de variabilidad lleva a diagnósticos y ajustes equivocados.',
+            example: 'Un SKU muestra un FactorVar alto; el equipo asume que el proveedor es inconsistente y lo penaliza, cuando en realidad la variabilidad viene de picos de demanda del cliente final, no del tiempo de entrega.'
+        }, {
+            title: 'Lead Time estable vs. variable: ¿misma protección?',
+            explain: 'No. Un SKU con Lead Time estable necesita menos protección que otro con Lead Time variable, aunque tengan la misma demanda promedio: la incertidumbre del suministro es lo que exige el "colchón" extra.',
+            example: 'Dos repuestos con ADU=10 unidades/día: el SKU A tiene un proveedor local confiable (LT casi fijo), el SKU B depende de importación con retrasos frecuentes. El SKU B necesita una Zona Roja más amplia, aunque venda lo mismo.'
+        }, {
+            title: 'Separar incertidumbre de demanda y de suministro',
+            explain: 'Separar ambas fuentes de incertidumbre permite identificar qué está realmente generando la necesidad de protección, y así atacar la causa correcta (mejorar el forecast vs. gestionar al proveedor) en vez de aplicar un colchón genérico.',
+            example: 'Si el buffer de un SKU es grande por alta variabilidad de LEAD TIME, aumentar el buffer no soluciona el problema de fondo: lo que se necesita es negociar con el proveedor o buscar uno más confiable.'
+        }, {
+            title: 'Discontinuidades en los factores de protección',
+            explain: 'Cuando los factores de protección cambian abruptamente entre rangos (ej. Corto=0.30, Medio=0.41, Largo=0.75), un SKU que pasa de 75 a 76 días de Lead Time puede saltar de golpe a un nivel de protección mucho mayor: una discontinuidad que no refleja un cambio real proporcional en el riesgo.',
+            example: 'Un SKU con LT=75 días usa Factor=0.41. Otro con LT=76 días usa Factor=0.75: apenas 1 día de diferencia casi duplica su buffer. Este "salto" artificial es señal de que el modelo necesita curvas más suaves, no escalones.'
+        }, {
+            title: 'Backtesting antes de declarar "es mejor"',
+            explain: 'Antes de afirmar que un modelo (como DDMRP V2) es mejor que el anterior, hay que compararlo objetivamente mediante backtesting: simulando ambos modelos sobre el mismo histórico y midiendo servicio e inventario juntos, no solo una de las dos métricas.',
+            example: 'Un equipo dice "V2 es mejor porque bajó el inventario 20%" sin revisar qué pasó con el Fill Rate. Si el servicio cayó de 95% a 80%, la reducción de inventario no fue una mejora: fue un sacrificio de servicio disfrazado de eficiencia.'
+        }, {
+            title: 'Buffer sospechosamente alto: investigar el Lead Time primero',
+            explain: 'Cuando un buffer resulta sospechosamente alto, el primer paso no es ajustar manualmente el factor ni dejar de comprar: es investigar la calidad y el origen del dato de Lead Time que está inflando el cálculo.',
+            example: 'Una referencia con ADU=19.7 y LT=125 días tiene un buffer enorme. Antes de "arreglarlo a mano", el planeador revisa el histórico de órdenes de compra y descubre que el LT=125 viene de una sola orden con retraso excepcional: el dato de origen estaba distorsionado.'
+        }, {
+            title: 'Evidencia insuficiente con muy pocas órdenes',
+            explain: 'Con apenas 2 órdenes de compra históricas no existe evidencia suficiente para confiar en un percentil específico del SKU (como un P90): se necesita más historial o usar una referencia agregada (por proveedor o categoría) mientras se acumula data.',
+            example: 'Una referencia tiene solo 2 OC: 81 y 125 días. Ni "el P90 es 125" ni "la mediana es 81" son afirmaciones confiables: ambas están apoyadas en un dato demasiado escaso.'
+        }, {
+            title: 'A igual demanda, más variabilidad exige más protección',
+            explain: 'A igual demanda, el SKU con Lead Time variable necesita mayor protección que el de Lead Time estable, porque la incertidumbre de cuándo llegará la reposición es mayor.',
+            example: 'SKU A y B venden lo mismo, pero A tiene un Lead Time casi constante y B fluctúa mucho. B necesitará una Zona Roja más grande para evitar quiebres durante esos períodos de incertidumbre.'
+        }, {
+            title: 'Inventario cero seguido de una venta: investigar todo',
+            explain: 'Ante este patrón hay que investigar TODAS las causas posibles antes de sacar conclusiones: pudo haber stockout, cambio de código de referencia, o simplemente venta perdida no registrada.',
+            example: 'Un repuesto aparece en cero inventario 4 meses y luego registra una venta. En vez de asumir "la demanda volvió sola", el planeador revisa el sistema y descubre que hubo un cambio de código de SKU que partió el histórico en dos: el problema era de datos, no de demanda.'
+        }, {
+            title: 'Reducir inventario a costa del servicio: alerta',
+            explain: 'Si un nuevo modelo reduce el inventario pero el Fill Rate cae de forma importante, eso NO es una mejora: es un síntoma de que el modelo está sacrificando servicio, y necesita revisión antes de adoptarse.',
+            example: 'DDMRP V2 reduce el inventario 25%, pero el Fill Rate cae de 96% a 88%. Esa caída de 8 puntos en servicio probablemente cueste más en ventas perdidas y clientes insatisfechos de lo que se ahorró en capital.'
+        }, {
+            title: 'Reducir inventario manteniendo el servicio: buena señal',
+            explain: 'Cuando un nuevo modelo reduce el inventario Y mantiene (o mejora) el Fill Rate, esa sí es evidencia favorable real: se logró más eficiencia sin sacrificar el servicio al cliente.',
+            example: 'DDMRP V2 mantiene el Fill Rate en 96% (igual que antes) pero reduce el inventario 18%. Ese es exactamente el tipo de resultado que valida adoptar el nuevo modelo.'
+        }, {
+            title: 'Decision Intelligence',
+            explain: 'Decision Intelligence no es solo tener dashboards ni reemplazar al planeador con IA: es convertir datos en recomendaciones explicables que ayuden al humano a decidir mejor y más rápido.',
+            example: 'En vez de solo mostrar "comprar 500 unidades", un sistema de Decision Intelligence explica por qué: "el buffer está en zona roja, la demanda tiene tendencia al alza y el proveedor tiene Lead Time estable", dándole al planeador el contexto para decidir con criterio.'
+        }, {
+            title: 'Recomendaciones con poca evidencia histórica',
+            explain: 'Cuando el sistema recomienda una acción pero hay poca evidencia histórica detrás, lo correcto es mostrar la recomendación junto con su nivel de confianza, no ocultarla ni ejecutarla ciegamente.',
+            example: 'El sistema sugiere comprar 500 unidades de un SKU con solo 3 meses de historial. En vez de comprar automáticamente, la plataforma debería mostrar: "Recomendación con confianza BAJA — pocos datos disponibles", dejando la decisión final al planeador.'
+        }, {
+            title: 'La afirmación más peligrosa',
+            explain: 'La afirmación más riesgosa es la que ejecuta una acción grande sin cuestionar el "por qué" del algoritmo. Reconocer baja confianza o falta de evidencia es, en cambio, una señal saludable de un sistema bien calibrado.',
+            example: '"Comprar 1.250 unidades porque el algoritmo lo dice" es peligrosa porque delega la responsabilidad sin entender el contexto. En cambio, "el modelo tiene baja confianza" invita a investigar antes de actuar: es la actitud correcta.'
+        }, {
+            title: 'Riesgo de quiebre alto + evidencia confiable',
+            explain: 'Cuando el riesgo de quiebre es alto y la evidencia que lo respalda es confiable, la primera acción del planeador debe ser analizar la oportunidad de reposición: actuar con base en datos sólidos, no ignorar ni sobre-reaccionar.',
+            example: 'Un SKU crítico muestra riesgo de quiebre alto, respaldado por un historial de demanda consistente y un Lead Time bien documentado. Aquí sí tiene sentido priorizar y acelerar la reposición, porque la evidencia es sólida.'
+        }, {
+            title: 'Demanda dependiente vs. independiente',
+            explain: 'La demanda independiente se pronostica directamente a partir del mercado (lo que compran los clientes); la demanda dependiente se calcula a partir de otra demanda, como los componentes que se necesitan para armar un producto.',
+            example: 'La demanda de camiones completos es independiente (se pronostica según el mercado). La demanda de los filtros que van dentro de cada camión es dependiente: se calcula multiplicando la cantidad de camiones planeados por los filtros que necesita cada uno.'
+        }, {
+            title: 'MAPE: el error porcentual promedio',
+            explain: 'El MAPE mide el error porcentual promedio del forecast respecto a la demanda real, sin ponderar por volumen (a diferencia del WAPE). Es útil para comparar la precisión entre SKU de tamaños distintos.',
+            example: 'Si un SKU tuvo un forecast de 100 unidades y la venta real fue 120, el error de ese punto es 16.7%. El MAPE promedia este tipo de errores porcentuales a través de todos los períodos evaluados.',
+            formula: 'MAPE = promedio( |Real − Forecast| ÷ Real ) × 100%'
+        }, {
+            title: 'Para qué sirve la clasificación ABC',
+            explain: 'La clasificación ABC prioriza el esfuerzo de gestión según el impacto de cada SKU (ventas, valor, criticidad), permitiendo enfocar el control fino donde realmente importa, en vez de tratar todos los SKU por igual.',
+            example: 'Los repuestos clase A (alto impacto, ej. filtros de alta rotación) reciben revisión semanal y forecast detallado; los clase C (bajo impacto) se gestionan con reglas simples y menos frecuentes, liberando tiempo del planeador para lo que más importa.'
+        }, {
+            title: 'Qué es un stockout',
+            explain: 'Un stockout es la ausencia de inventario disponible para atender una demanda existente. Se diferencia de "no tener demanda": el cliente sí quería comprar, pero no había producto disponible.',
+            example: 'Un cliente busca comprar 10 pastillas de freno pero solo hay 2 en bodega: las 8 unidades faltantes representan un stockout, con la consecuente venta perdida o cliente insatisfecho.'
+        }, {
+            title: 'El efecto Bullwhip (látigo)',
+            explain: 'El efecto Bullwhip describe cómo pequeñas variaciones en la demanda del consumidor final se amplifican cada vez más a medida que se propagan hacia atrás en la cadena de suministro (distribuidor, fabricante, proveedor de materia prima).',
+            example: 'Un taller aumenta su pedido de repuestos un 10% por precaución. El distribuidor, viendo ese aumento, pide 20% más a su proveedor "por si acaso". El fabricante produce 40% más: una pequeña señal se convirtió en una gran sobre-reacción en cadena.'
+        }, {
+            title: 'La ventaja del forecast "bottom-up"',
+            explain: 'Un pronóstico bottom-up (por SKU) captura mejor el comportamiento particular de cada referencia individual, a diferencia de uno top-down (agregado) que puede ocultar patrones específicos de SKU dentro de un promedio general.',
+            example: 'Un forecast agregado por categoría "filtros" puede verse estable, pero dentro de esa categoría un filtro específico puede estar cayendo en ventas mientras otro crece: el enfoque bottom-up detecta esas diferencias que el agregado esconde.'
+        }, {
+            title: 'Fill Rate bajo sostenido: qué revisar primero',
+            explain: 'Ante una caída sostenida del Fill Rate en un SKU crítico, lo primero es revisar la calidad del forecast, el Lead Time real y el nivel de buffer/stock de seguridad, no asumir que "es normal" ni culpar un solo factor sin evidencia.',
+            example: 'El Fill Rate del SKU crítico baja de 95% a 82% durante 3 meses seguidos. Al investigar, el planeador encuentra que el Lead Time del proveedor aumentó silenciosamente sin que se ajustara la Zona Amarilla: el buffer quedó desactualizado.'
+        }, {
+            title: 'Las tres zonas del buffer DDMRP',
+            explain: 'El buffer DDMRP se organiza en tres zonas: Roja (protección ante variabilidad), Amarilla (cobertura del Lead Time) y Verde (tamaño/frecuencia de las órdenes). Juntas determinan cuándo y cuánto reponer.',
+            example: 'Un buffer con Zona Roja=200, Amarilla=600, Verde=300 unidades tiene un "techo" de 1.100. Cuando el inventario disponible más lo en tránsito cae por debajo de 800 (techo de la Zona Amarilla), el sistema genera una alerta de reposición.'
+        }, {
+            title: 'El Decoupling Point (punto de desacople)',
+            explain: 'El Decoupling Point es un punto estratégico de la cadena donde se posiciona inventario deliberadamente para absorber la variabilidad y desacoplar la demanda del cliente de la incertidumbre de la oferta (proveedores, producción).',
+            example: 'En lugar de mantener inventario en cada eslabón de la cadena, la empresa decide posicionar el buffer principal solo en la bodega regional: ese es su Decoupling Point, y desde ahí absorbe la variabilidad de todos los puntos aguas abajo.'
+        }, {
+            title: 'Net Flow Position: la métrica central de DDMRP',
+            explain: 'El Net Flow Position es la métrica central de DDMRP: inventario disponible + órdenes en tránsito/pedidas − demanda calificada (pedidos confirmados y picos relevantes). Es lo que se compara contra las zonas del buffer para decidir si reponer.',
+            example: 'On Hand=300, Órdenes en tránsito=200, Demanda calificada=150 → Net Flow Position = 300+200−150 = 350. Ese número, no solo el inventario físico, se compara contra el "techo" del buffer para decidir si se genera una nueva orden.',
+            formula: 'Net Flow Position = On Hand + Órdenes en tránsito − Demanda calificada'
+        }, {
+            title: 'Order Spike Horizon',
+            explain: 'El Order Spike Horizon es la ventana de tiempo usada para detectar pedidos anómalamente grandes ("picos") que podrían agotar el buffer antes de lo previsto, permitiendo ajustar la posición de flujo neto ante esos eventos puntuales.',
+            example: 'Un cliente hace un pedido excepcional de 500 unidades cuando lo normal son pedidos de 20. Si ese pico cae dentro del Order Spike Horizon, el sistema lo detecta y ajusta la demanda calificada, evitando que agote el buffer sin previo aviso.'
+        }, {
+            title: 'Lead Time de fabricación vs. de compra',
+            explain: 'El Lead Time de fabricación depende de la capacidad y procesos internos de la empresa; el Lead Time de compra depende del proveedor externo. Cada uno tiene fuentes de variabilidad distintas y debe gestionarse de forma diferente.',
+            example: 'Un repuesto fabricado internamente tiene un LT de 5 días (controlado por la planta propia). El mismo tipo de repuesto, si se importa, puede tener un LT de 90 días sujeto a aduanas y transporte marítimo.'
+        }, {
+            title: 'Misma media, distinta desviación: más riesgo',
+            explain: 'Si dos proveedores tienen el mismo Lead Time promedio pero diferente desviación estándar, el de mayor desviación (más variabilidad) requiere más protección, porque es menos predecible cuándo llegará realmente el pedido.',
+            example: 'Proveedor X: promedio 60 días, desviación 5 días (muy predecible). Proveedor Y: promedio 60 días, desviación 25 días (poco predecible). Aunque ambos "prometen" lo mismo en promedio, Y exige un buffer bastante mayor.'
+        }, {
+            title: 'Qué define el tamaño de la Zona Verde',
+            explain: 'La Zona Verde depende principalmente del Lead Time, el ADU y restricciones de compra como el tamaño mínimo de orden (MOQ). Determina cada cuánto y en qué cantidad se genera una nueva orden de reposición.',
+            example: 'Un SKU con ADU=15 y un MOQ del proveedor de 300 unidades tendrá una Zona Verde más grande (aprox. esas 300 unidades) que uno sin restricción de mínimo de compra, aunque tengan el mismo consumo diario.'
+        }, {
+            title: 'Mismo estado de buffer, contexto distinto',
+            explain: 'Dos SKU en el mismo estado de buffer (ej. ambos en rojo) pueden requerir acciones distintas según su contexto: causa raíz, criticidad para el cliente, y calidad de la evidencia disponible. El planeador no debe tratarlos igual solo porque coincide el color de alerta.',
+            example: 'Dos repuestos están en Zona Roja. Uno es crítico para un cliente estratégico con evidencia de demanda sólida (prioridad alta); el otro es de bajo impacto y su buffer está mal calibrado (requiere ajuste, no compra urgente). Misma alerta, decisiones distintas.'
+        }, {
+            title: 'Por qué importa la explicabilidad de la IA',
+            explain: 'Que una recomendación de IA sea explicable permite al planeador confiar, auditar y corregir esa recomendación con criterio humano, en vez de seguirla (o rechazarla) a ciegas.',
+            example: 'En lugar de solo decir "comprar 800 unidades", un sistema explicable muestra: "porque el buffer está en rojo, el Lead Time subió 20% y la demanda tiene tendencia creciente confirmada". El planeador puede validar cada motivo antes de aprobar.'
+        }, {
+            title: 'Cuándo escalar una decisión',
+            explain: 'Un planeador debe escalar una decisión a un analista senior o especialista cuando hay alta incertidumbre, poca evidencia histórica, o un impacto financiero significativo: situaciones donde el riesgo de un error amerita una segunda mirada experta.',
+            example: 'Una recomendación de compra de $150 millones de pesos para un SKU con solo 2 meses de historial y alta variabilidad de demanda debería escalarse para revisión, en vez de aprobarse solo porque el sistema la sugirió.'
+        }, {
+            title: 'Para qué sirve el histórico de accuracy del forecast',
+            explain: 'Revisar el histórico de accuracy de un SKU permite calibrar cuánto confiar en las recomendaciones futuras de ese SKU específico: uno con forecast históricamente preciso merece más autonomía que uno con historial de grandes errores.',
+            example: 'El SKU X ha tenido un MAPE consistente por debajo del 15% durante el último año: sus recomendaciones pueden automatizarse con más confianza. El SKU Y tiene un MAPE errático de 40-80%: sus recomendaciones deben pasar siempre por revisión manual.'
+        }, {
+            title: 'El rol del planeador ante alta incertidumbre',
+            explain: 'Ante una recomendación con alta incertidumbre, el rol correcto del planeador es evaluarla críticamente, buscar evidencia adicional y decidir con criterio experto: combinando el análisis del sistema con el juicio humano.',
+            example: 'El sistema recomienda una compra grande con "confianza baja". El planeador, en vez de ejecutarla o ignorarla sin más, revisa el contexto comercial (¿hay una promoción próxima? ¿cambió algo con el cliente?) antes de tomar la decisión final.'
+        }, {
+            title: 'Análisis de causa raíz (Root Cause Analysis)',
+            explain: 'Un análisis de causa raíz busca identificar la razón de fondo de un problema (como un quiebre o un exceso de inventario) en vez de solo tratar su síntoma visible: es la diferencia entre "apagar el incendio" y evitar que vuelva a empezar.',
+            example: 'Un SKU tuvo un quiebre de stock. Tratar el síntoma sería solo comprar más rápido esta vez. Un análisis de causa raíz investiga por qué ocurrió: ¿el Lead Time cambió sin actualizar el buffer? ¿hubo un pico de demanda no detectado? — y corrige la causa real.'
+        }];
+
 
         // ============================================================
         //  FIREBASE
@@ -1732,24 +2035,35 @@
         function renderReviewSlide(index) {
             const qIdx = gameState.questionSet[index];
             const q = QUESTIONS[qIdx];
+            const content = TEACHING_CONTENT[qIdx] || {
+                title: q.question,
+                explain: q.explanation,
+                example: ''
+            };
             const total = gameState.questionSet.length;
 
             document.getElementById('reviewTopicTag').textContent = TOPIC_LABELS[q.section];
             document.getElementById('reviewNumber').textContent = `Repaso ${index + 1} / ${total}`;
-            document.getElementById('reviewQuestionText').textContent = q.question;
+            document.getElementById('reviewTitle').textContent = content.title;
+            document.getElementById('reviewConcept').textContent = content.explain;
+            document.getElementById('reviewExample').textContent = content.example;
 
-            const container = document.getElementById('reviewOptions');
-            container.innerHTML = '';
-            q.options.forEach((opt, i) => {
-                const btn = document.createElement('button');
-                btn.className = 'question-option disabled' + (i === q.correct ? ' correct' : '');
-                btn.innerHTML = `<span class="letter">${LETTERS[i]}</span> ${opt}`;
-                container.appendChild(btn);
-            });
+            const formulaCard = document.getElementById('reviewFormulaCard');
+            if (content.formula) {
+                document.getElementById('reviewFormula').textContent = content.formula;
+                formulaCard.classList.remove('hidden');
+            } else {
+                formulaCard.classList.add('hidden');
+            }
 
-            document.getElementById('reviewCorrectLabel').textContent =
-                `✅ Respuesta correcta: ${LETTERS[q.correct]}`;
-            document.getElementById('reviewExplanation').textContent = q.explanation;
+            // Barra de puntos de progreso
+            const progressContainer = document.getElementById('reviewProgress');
+            progressContainer.innerHTML = '';
+            for (let i = 0; i < total; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot' + (i < index ? ' done' : '') + (i === index ? ' current' : '');
+                progressContainer.appendChild(dot);
+            }
 
             const isPresenter = gameState.mode === 'presenter';
             document.getElementById('presenterReviewControls').classList.toggle('hidden', !isPresenter);
