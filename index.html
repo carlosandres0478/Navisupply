@@ -595,6 +595,91 @@
         .refresh-btn:hover {
             background: rgba(255, 255, 255, 0.1);
         }
+        .topic-checklist {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .topic-checklist label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+        .topic-checklist input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #f5576c;
+            flex-shrink: 0;
+        }
+        .topic-checklist .topic-count {
+            margin-left: auto;
+            opacity: 0.5;
+            font-size: 12px;
+            font-weight: 400;
+        }
+        #questionCount {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 16px;
+        }
+        .review-topic-tag {
+            display: inline-block;
+            background: rgba(245, 87, 108, 0.15);
+            border: 1px solid rgba(245, 87, 108, 0.4);
+            color: #f5576c;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+        }
+        .review-answer-box {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .review-answer-box .label {
+            color: #4caf50;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+        .review-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .review-controls button {
+            flex: 1;
+        }
+        .btn-outline {
+            padding: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: transparent;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -631,7 +716,16 @@
                         <option value="capacitacion">📚 Capacitación</option>
                     </select>
                 </div>
-                <button class="btn-primary" onclick="createGame()">🚀 Crear Partida</button>
+                <div class="form-group">
+                    <label>Temas a incluir</label>
+                    <div id="topicChecklist" class="topic-checklist"></div>
+                </div>
+                <div class="form-group">
+                    <label>Cantidad total de preguntas</label>
+                    <input type="number" id="questionCount" min="1" value="20">
+                    <div id="questionCountHint" style="font-size:12px;opacity:0.6;margin-top:5px;"></div>
+                </div>
+                <button class="btn-primary" onclick="createGame()">👀 Repasar Contenido y Crear Partida</button>
                 <div class="share-instructions" style="margin-top:15px;">
                     <p style="font-size:13px;opacity:0.7;">
                         📱 <strong>Comparte esta URL con tu equipo:</strong><br>
@@ -657,6 +751,28 @@
             </div>
 
             <div id="errorMessage" class="error-message" style="display:none;"></div>
+        </div>
+
+        <!-- Repaso / Enseñanza -->
+        <div id="reviewSection" class="game-section">
+            <div class="review-topic-tag" id="reviewTopicTag">Sección</div>
+            <div class="question-header">
+                <span class="question-number" id="reviewNumber">Repaso 1 / 20</span>
+            </div>
+            <div class="question-text" id="reviewQuestionText">Cargando...</div>
+            <div class="question-options" id="reviewOptions"></div>
+            <div class="review-answer-box">
+                <div class="label" id="reviewCorrectLabel">✅ Respuesta correcta</div>
+                <div class="explanation" id="reviewExplanation"></div>
+            </div>
+            <div id="presenterReviewControls" class="review-controls hidden">
+                <button class="btn-outline" onclick="reviewPrev()">⬅️ Anterior</button>
+                <button class="btn-outline" onclick="skipReview()">⏭️ Saltar repaso</button>
+                <button class="btn-primary" id="reviewNextBtn" onclick="reviewNext()" style="margin-top:0;">Siguiente ➡️</button>
+            </div>
+            <div id="playerReviewStatus" class="text-center mt-20 hidden">
+                <span style="opacity:0.7;">📖 El presentador está repasando el contenido contigo...</span>
+            </div>
         </div>
 
         <!-- Lobby -->
@@ -1065,7 +1181,228 @@
             ],
             correct: 1,
             explanation: 'Ante riesgo de quiebre y evidencia confiable, analizar la reposición.'
+        }, {
+            section: 1,
+            question: '¿Qué diferencia hay entre demanda dependiente e independiente?',
+            options: [
+                'No hay diferencia, son sinónimos',
+                'La dependiente se deriva de otra demanda (ej. componentes); la independiente se pronostica directamente',
+                'La independiente siempre es más alta',
+                'La dependiente solo aplica a materia prima importada'
+            ],
+            correct: 1,
+            explanation: 'La demanda dependiente se calcula a partir de otra (BOM, componentes); la independiente se pronostica con base en el mercado.'
+        }, {
+            section: 1,
+            question: '¿Qué mide el MAPE (Mean Absolute Percentage Error)?',
+            options: [
+                'El costo del inventario',
+                'El error porcentual promedio del forecast respecto a la demanda real',
+                'El nivel de servicio del proveedor',
+                'La rotación de inventario'
+            ],
+            correct: 1,
+            explanation: 'MAPE expresa el error del forecast como un porcentaje promedio, útil para comparar precisión entre SKU.'
+        }, {
+            section: 1,
+            question: '¿Para qué sirve principalmente la clasificación ABC de inventario?',
+            options: [
+                'Para ordenar alfabéticamente los SKU',
+                'Para priorizar el esfuerzo de gestión según el impacto de cada SKU (ventas, valor, criticidad)',
+                'Para decidir el color del empaque',
+                'Para eliminar SKU de baja rotación automáticamente'
+            ],
+            correct: 1,
+            explanation: 'La clasificación ABC permite enfocar el control y la precisión donde el impacto en el negocio es mayor.'
+        }, {
+            section: 1,
+            question: 'Un stockout ocurre cuando:',
+            options: [
+                'El inventario supera el máximo permitido',
+                'No hay unidades disponibles para atender una demanda',
+                'El proveedor entrega antes de tiempo',
+                'El forecast es mayor a la venta real'
+            ],
+            correct: 1,
+            explanation: 'Un stockout es la ausencia de inventario disponible cuando existe demanda por atender.'
+        }, {
+            section: 1,
+            question: '¿Qué es el efecto Bullwhip (látigo) en una cadena de suministro?',
+            options: [
+                'Una técnica de pronóstico avanzada',
+                'La amplificación de la variabilidad de la demanda a medida que se aleja del consumidor final',
+                'Un indicador de nivel de servicio',
+                'Un tipo de buffer en DDMRP'
+            ],
+            correct: 1,
+            explanation: 'Pequeñas variaciones en la demanda del consumidor final se amplifican aguas arriba en la cadena, generando sobre-reacciones.'
+        }, {
+            section: 1,
+            question: '¿Qué ventaja tiene un pronóstico "bottom-up" (por SKU) frente a uno "top-down" (agregado)?',
+            options: [
+                'Siempre es más rápido de calcular',
+                'Captura mejor el comportamiento particular de cada referencia',
+                'No requiere datos históricos',
+                'Elimina la necesidad de clasificación ABC'
+            ],
+            correct: 1,
+            explanation: 'El enfoque bottom-up modela cada SKU según su propio patrón, a costa de mayor esfuerzo de cálculo y mantenimiento.'
+        }, {
+            section: 1,
+            question: 'Si el Fill Rate de un SKU crítico cae por debajo del objetivo de forma sostenida, ¿qué se debe revisar primero?',
+            options: [
+                'Cambiar el nombre del SKU',
+                'La calidad del forecast, el Lead Time y el nivel de buffer/stock de seguridad',
+                'El color de la etiqueta del producto',
+                'Nada, es normal que fluctúe'
+            ],
+            correct: 1,
+            explanation: 'Una caída sostenida del Fill Rate suele originarse en forecast, Lead Time o dimensionamiento del inventario de protección.'
+        }, {
+            section: 2,
+            question: '¿Cuáles son las tres zonas principales de un buffer DDMRP?',
+            options: [
+                'Roja, Amarilla y Verde',
+                'Alta, Media y Baja',
+                'Norte, Sur y Centro',
+                'Primaria, Secundaria y Terciaria'
+            ],
+            correct: 0,
+            explanation: 'El buffer DDMRP se divide en Zona Roja (protección), Zona Amarilla (cobertura de Lead Time) y Zona Verde (tamaño de orden).'
+        }, {
+            section: 2,
+            question: '¿Qué representa el "Decoupling Point" (punto de desacople) en DDMRP?',
+            options: [
+                'El punto donde se factura al cliente',
+                'Un punto estratégico de la cadena donde se posiciona inventario para absorber variabilidad y desacoplar la demanda de la oferta',
+                'El punto donde termina la garantía del proveedor',
+                'El almacén más grande de la red'
+            ],
+            correct: 1,
+            explanation: 'Los puntos de desacople amortiguan la variabilidad, evitando que se propague de extremo a extremo de la cadena.'
+        }, {
+            section: 2,
+            question: '¿Qué es el Net Flow Position (Posición de Flujo Neto)?',
+            options: [
+                'El inventario físico únicamente',
+                'On Hand + Órdenes en tránsito/pedidas − Demanda calificada',
+                'El costo total del inventario',
+                'La suma de todas las ventas del mes'
+            ],
+            correct: 1,
+            explanation: 'El Net Flow Position es la métrica clave de DDMRP para decidir si se debe generar una orden de reposición.'
+        }, {
+            section: 2,
+            question: '¿Qué es el Order Spike Horizon y por qué es relevante?',
+            options: [
+                'El tiempo que tarda un cliente en pagar una factura',
+                'La ventana de tiempo usada para detectar picos anómalos de demanda que podrían agotar el buffer',
+                'El período de garantía del producto',
+                'La fecha límite para hacer devoluciones'
+            ],
+            correct: 1,
+            explanation: 'El Order Spike Horizon ayuda a identificar pedidos inusualmente grandes que ameritan ajustar la posición de flujo neto.'
+        }, {
+            section: 2,
+            question: '¿Qué diferencia hay entre el Lead Time de fabricación y el Lead Time de compra?',
+            options: [
+                'Son exactamente lo mismo',
+                'El de fabricación depende de la capacidad interna; el de compra depende del proveedor externo',
+                'El de compra siempre es más corto',
+                'El de fabricación no tiene variabilidad'
+            ],
+            correct: 1,
+            explanation: 'Cada tipo de Lead Time tiene fuentes de variabilidad distintas y debe analizarse por separado.'
+        }, {
+            section: 2,
+            question: 'Si dos proveedores tienen el mismo Lead Time promedio pero diferente desviación estándar, ¿cuál requiere más protección?',
+            options: [
+                'El de menor desviación estándar',
+                'El de mayor desviación estándar (más variabilidad)',
+                'Ambos requieren la misma protección',
+                'Ninguno, el promedio es lo único relevante'
+            ],
+            correct: 1,
+            explanation: 'A mayor variabilidad (desviación estándar), mayor es la incertidumbre y, por tanto, la protección necesaria.'
+        }, {
+            section: 2,
+            question: '¿Qué factores influyen principalmente en el tamaño de la Zona Verde de un buffer?',
+            options: [
+                'El color del empaque y el proveedor',
+                'El Lead Time, el ADU y el tamaño mínimo de orden (MOQ) o factores de orden definidos',
+                'Únicamente el precio del producto',
+                'La antigüedad del SKU en el catálogo'
+            ],
+            correct: 1,
+            explanation: 'La Zona Verde define la frecuencia/tamaño de las órdenes y depende de Lead Time, ADU y restricciones de compra.'
+        }, {
+            section: 3,
+            question: 'Dos SKU con el mismo estado de buffer (rojo) pero contextos distintos: ¿qué debe hacer el planeador?',
+            options: [
+                'Aplicar la misma acción a ambos automáticamente',
+                'Analizar el contexto de cada uno (causa raíz, criticidad, evidencia) antes de decidir',
+                'Ignorar el de menor precio',
+                'Esperar a que el sistema decida solo'
+            ],
+            correct: 1,
+            explanation: 'El estado del buffer es una señal, no una decisión automática; el contexto de cada SKU importa.'
+        }, {
+            section: 3,
+            question: '¿Por qué es importante que una recomendación de IA sea explicable para el planeador?',
+            options: [
+                'Porque así se ve más sofisticada',
+                'Porque permite confiar, auditar y corregir la recomendación con criterio humano',
+                'No es importante, solo importa el resultado final',
+                'Porque reduce el tamaño del archivo de datos'
+            ],
+            correct: 1,
+            explanation: 'La explicabilidad permite que el planeador entienda el "por qué" y decida con criterio en vez de actuar a ciegas.'
+        }, {
+            section: 3,
+            question: '¿Cuándo debería un planeador escalar una decisión a un analista senior o especialista?',
+            options: [
+                'Nunca, el sistema siempre tiene la razón',
+                'Cuando hay alta incertidumbre, bajo volumen de evidencia o impacto financiero significativo',
+                'Solo si el SKU es de clasificación C',
+                'Solo los viernes'
+            ],
+            correct: 1,
+            explanation: 'Ante alta incertidumbre o alto impacto, escalar la decisión reduce el riesgo de errores costosos.'
+        }, {
+            section: 3,
+            question: '¿Para qué sirve revisar el histórico de accuracy del forecast de un SKU?',
+            options: [
+                'Para decorar el dashboard',
+                'Para calibrar el nivel de confianza que se le da a las recomendaciones futuras de ese SKU',
+                'No tiene ninguna utilidad práctica',
+                'Solo sirve para fines contables'
+            ],
+            correct: 1,
+            explanation: 'Un historial de accuracy permite saber cuánto confiar en el forecast de cada SKU y ajustar la protección en consecuencia.'
+        }, {
+            section: 3,
+            question: 'Ante una recomendación del sistema con alta incertidumbre, ¿cuál es el rol correcto del planeador?',
+            options: [
+                'Ejecutarla sin revisar, para ahorrar tiempo',
+                'Evaluarla críticamente, buscar evidencia adicional y decidir con criterio experto',
+                'Rechazarla siempre por principio',
+                'Delegarla a otro compañero sin contexto'
+            ],
+            correct: 1,
+            explanation: 'La Decision Intelligence combina el análisis del sistema con el juicio experto del planeador, especialmente ante incertidumbre.'
+        }, {
+            section: 3,
+            question: '¿Qué es un "análisis de causa raíz" (root cause analysis) en gestión de inventario?',
+            options: [
+                'Un reporte financiero mensual',
+                'Un proceso para identificar la causa real de un problema (ej. quiebre o exceso) en vez de solo tratar el síntoma',
+                'Una técnica exclusiva de manufactura',
+                'Un tipo de auditoría contable'
+            ],
+            correct: 1,
+            explanation: 'El análisis de causa raíz busca la razón de fondo de un problema para corregirlo de forma definitiva, no solo su efecto visible.'
         }];
+
 
         // ============================================================
         //  FIREBASE
@@ -1090,6 +1427,12 @@
         const db = getDatabase(firebaseApp);
 
         const SECTION_TIMERS = { 1: 20, 2: 25, 3: 40 };
+        const TOPIC_LABELS = {
+            1: 'Fundamentos de Demanda e Inventario',
+            2: 'DDMRP, Lead Time y Variabilidad',
+            3: 'El Reto del Planeador'
+        };
+        const LETTERS = ['A', 'B', 'C', 'D'];
 
         // ============================================================
         //  ESTADO DEL JUEGO (espejo local de Firebase)
@@ -1101,6 +1444,8 @@
             maxPlayers: 10,
             gameMode: 'competencia',
             currentQuestion: -1,
+            questionSet: [],
+            reviewIndex: -1,
             scores: {},
             answers: {},
             sectionScores: {},
@@ -1115,9 +1460,10 @@
         let currentQuestionStartTime = null;
         let myAnsweredThisQuestion = false;
         let lastRenderedPhase = null;
+        let lastRenderedReviewIndex = null;
 
         // ============================================================
-        //  FUNCIONES DE UI
+        //  FUNCIONES DE UI GENERALES
         // ============================================================
 
         function showSection(id) {
@@ -1146,6 +1492,97 @@
                 currentPlayerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
             }
             return currentPlayerId;
+        }
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // ============================================================
+        //  CONFIGURACIÓN DE TEMAS (checklist en el home)
+        // ============================================================
+
+        function buildTopicChecklist() {
+            const container = document.getElementById('topicChecklist');
+            container.innerHTML = '';
+            Object.keys(TOPIC_LABELS).forEach(sec => {
+                const section = parseInt(sec);
+                const count = QUESTIONS.filter(q => q.section === section).length;
+                const label = document.createElement('label');
+                label.innerHTML = `
+                    <input type="checkbox" class="topic-check" value="${section}" checked onchange="updateQuestionCountHint()">
+                    <span>${TOPIC_LABELS[section]}</span>
+                    <span class="topic-count">${count} preguntas</span>
+                `;
+                container.appendChild(label);
+            });
+            updateQuestionCountHint();
+        }
+
+        function getSelectedTopics() {
+            return Array.from(document.querySelectorAll('.topic-check:checked')).map(el => parseInt(el.value));
+        }
+
+        function updateQuestionCountHint() {
+            const selected = getSelectedTopics();
+            const available = QUESTIONS.filter(q => selected.includes(q.section)).length;
+            const input = document.getElementById('questionCount');
+            const hint = document.getElementById('questionCountHint');
+            if (available === 0) {
+                hint.textContent = 'Selecciona al menos un tema';
+                input.max = 1;
+                return;
+            }
+            input.max = available;
+            if (parseInt(input.value) > available || !input.value) {
+                input.value = Math.min(20, available);
+            }
+            hint.textContent = `Disponibles con los temas seleccionados: ${available} preguntas`;
+        }
+
+        function buildQuestionSet(selectedSections, totalCount) {
+            const poolsBySection = {};
+            selectedSections.forEach(s => {
+                poolsBySection[s] = QUESTIONS
+                    .map((q, i) => i)
+                    .filter(i => QUESTIONS[i].section === s);
+                shuffle(poolsBySection[s]);
+            });
+
+            const totalAvailable = selectedSections.reduce((sum, s) => sum + poolsBySection[s].length, 0);
+            const cappedTotal = Math.max(1, Math.min(totalCount, totalAvailable));
+
+            const allocation = {};
+            let allocated = 0;
+            selectedSections.forEach(s => {
+                const raw = cappedTotal * (poolsBySection[s].length / totalAvailable);
+                allocation[s] = Math.floor(raw);
+                allocated += allocation[s];
+            });
+
+            let remaining = cappedTotal - allocated;
+            let si = 0;
+            let guard = 0;
+            while (remaining > 0 && guard < 10000) {
+                const s = selectedSections[si % selectedSections.length];
+                if (allocation[s] < poolsBySection[s].length) {
+                    allocation[s]++;
+                    remaining--;
+                }
+                si++;
+                guard++;
+            }
+
+            const orderedSections = [...selectedSections].sort((a, b) => a - b);
+            let result = [];
+            orderedSections.forEach(s => {
+                result = result.concat(poolsBySection[s].slice(0, allocation[s]));
+            });
+            return result;
         }
 
         // ============================================================
@@ -1180,11 +1617,20 @@
             gameState.answers = data.answers || {};
             gameState.gameStarted = !!data.gameStarted;
             gameState.currentQuestion = typeof data.currentQuestion === 'number' ? data.currentQuestion : -1;
+            gameState.questionSet = data.questionSet || [];
+            gameState.reviewIndex = typeof data.reviewIndex === 'number' ? data.reviewIndex : -1;
+            gameState.sectionIntroShownFor = data.sectionIntroShownFor || null;
             gameState.finished = !!data.finished;
 
             const phaseChanged = lastRenderedPhase !== data.phase;
 
-            if (data.phase === 'lobby') {
+            if (data.phase === 'review') {
+                if (phaseChanged || lastRenderedReviewIndex !== data.reviewIndex) {
+                    renderReviewSlide(data.reviewIndex);
+                    showSection('reviewSection');
+                    lastRenderedReviewIndex = data.reviewIndex;
+                }
+            } else if (data.phase === 'lobby') {
                 updateLobby();
                 if (phaseChanged) showSection('lobbySection');
             } else if (data.phase === 'question') {
@@ -1220,10 +1666,23 @@
         }
 
         // ============================================================
-        //  CREAR PARTIDA (PRESENTADOR)
+        //  CREAR PARTIDA (PRESENTADOR) -> empieza en modo Repaso
         // ============================================================
 
         function createGame() {
+            const selectedTopics = getSelectedTopics();
+            if (selectedTopics.length === 0) {
+                showError('Selecciona al menos un tema');
+                return;
+            }
+            const totalCount = parseInt(document.getElementById('questionCount').value) || 20;
+
+            const questionSet = buildQuestionSet(selectedTopics, totalCount);
+            if (questionSet.length === 0) {
+                showError('No hay preguntas disponibles con esa selección');
+                return;
+            }
+
             const code = Math.floor(100000 + Math.random() * 900000).toString();
             gameState.mode = 'presenter';
             gameState.code = code;
@@ -1237,7 +1696,10 @@
                 players: {},
                 gameStarted: false,
                 currentQuestion: -1,
-                phase: 'lobby',
+                questionSet: questionSet,
+                reviewIndex: 0,
+                sectionIntroShownFor: null,
+                phase: 'review',
                 isAnswerShown: false,
                 questionStartTime: null,
                 answers: {},
@@ -1251,17 +1713,69 @@
                 document.getElementById('gameCodeDisplay').textContent = code;
                 document.getElementById('lobbyCode').textContent = code;
 
-                showSection('lobbySection');
                 document.getElementById('homeSection').classList.remove('active');
-
-                document.getElementById('presenterLobbyControls').classList.remove('hidden');
-                document.getElementById('playerLobbyStatus').classList.add('hidden');
+                document.getElementById('presenterReviewControls').classList.remove('hidden');
+                document.getElementById('playerReviewStatus').classList.add('hidden');
 
                 lastRenderedPhase = null;
+                lastRenderedReviewIndex = null;
                 listenToGame(code);
             }).catch(err => {
                 showError('No se pudo crear la partida: ' + err.message);
             });
+        }
+
+        // ============================================================
+        //  REPASO / ENSEÑANZA
+        // ============================================================
+
+        function renderReviewSlide(index) {
+            const qIdx = gameState.questionSet[index];
+            const q = QUESTIONS[qIdx];
+            const total = gameState.questionSet.length;
+
+            document.getElementById('reviewTopicTag').textContent = TOPIC_LABELS[q.section];
+            document.getElementById('reviewNumber').textContent = `Repaso ${index + 1} / ${total}`;
+            document.getElementById('reviewQuestionText').textContent = q.question;
+
+            const container = document.getElementById('reviewOptions');
+            container.innerHTML = '';
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'question-option disabled' + (i === q.correct ? ' correct' : '');
+                btn.innerHTML = `<span class="letter">${LETTERS[i]}</span> ${opt}`;
+                container.appendChild(btn);
+            });
+
+            document.getElementById('reviewCorrectLabel').textContent =
+                `✅ Respuesta correcta: ${LETTERS[q.correct]}`;
+            document.getElementById('reviewExplanation').textContent = q.explanation;
+
+            const isPresenter = gameState.mode === 'presenter';
+            document.getElementById('presenterReviewControls').classList.toggle('hidden', !isPresenter);
+            document.getElementById('playerReviewStatus').classList.toggle('hidden', isPresenter);
+
+            const nextBtn = document.getElementById('reviewNextBtn');
+            nextBtn.textContent = (index >= total - 1) ? '✅ Finalizar repaso e ir al lobby' : 'Siguiente ➡️';
+        }
+
+        function reviewNext() {
+            const total = gameState.questionSet.length;
+            const next = gameState.reviewIndex + 1;
+            if (next >= total) {
+                update(ref(db, `games/${gameState.code}`), { phase: 'lobby' });
+            } else {
+                update(ref(db, `games/${gameState.code}`), { reviewIndex: next });
+            }
+        }
+
+        function reviewPrev() {
+            const prev = Math.max(0, gameState.reviewIndex - 1);
+            update(ref(db, `games/${gameState.code}`), { reviewIndex: prev });
+        }
+
+        function skipReview() {
+            update(ref(db, `games/${gameState.code}`), { phase: 'lobby' });
         }
 
         // ============================================================
@@ -1314,10 +1828,7 @@
                     gameState.maxPlayers = game.maxPlayers;
 
                     document.getElementById('gameCodeDisplay').textContent = code;
-
-                    showSection('lobbySection');
                     document.getElementById('homeSection').classList.remove('active');
-
                     document.getElementById('presenterLobbyControls').classList.add('hidden');
                     document.getElementById('playerLobbyStatus').classList.remove('hidden');
 
@@ -1326,6 +1837,7 @@
                     }
 
                     lastRenderedPhase = null;
+                    lastRenderedReviewIndex = null;
                     listenToGame(code);
                 }).catch(err => {
                     showError('No se pudo unir a la partida: ' + err.message);
@@ -1374,6 +1886,10 @@
                 startBtn.disabled = true;
                 startBtn.textContent = `⏳ Esperando jugadores... (${players.length}/2 mínimo)`;
             }
+
+            const isPresenter = gameState.mode === 'presenter';
+            document.getElementById('presenterLobbyControls').classList.toggle('hidden', !isPresenter || gameState.gameStarted);
+            document.getElementById('playerLobbyStatus').classList.toggle('hidden', isPresenter);
         }
 
         // ============================================================
@@ -1389,7 +1905,7 @@
             update(ref(db, `games/${gameState.code}`), {
                 gameStarted: true,
                 currentQuestion: -1,
-                phase: 'lobby'
+                sectionIntroShownFor: null
             }).then(() => {
                 document.getElementById('presenterLobbyControls').classList.add('hidden');
                 setTimeout(() => {
@@ -1405,24 +1921,27 @@
         function nextQuestion() {
             if (gameState.finished) return;
 
-            let idx = gameState.currentQuestion + 1;
+            const qs = gameState.questionSet;
+            const pos = gameState.currentQuestion + 1;
 
-            if (idx >= QUESTIONS.length) {
+            if (pos >= qs.length) {
                 finishGame();
                 return;
             }
 
-            if (idx === 0 || idx === 10 || idx === 20) {
+            const section = QUESTIONS[qs[pos]].section;
+
+            if (gameState.sectionIntroShownFor !== section) {
                 update(ref(db, `games/${gameState.code}`), {
-                    currentQuestion: idx,
                     phase: 'sectionComplete',
-                    section: Math.floor(idx / 10) + 1
+                    section: section,
+                    sectionIntroShownFor: section
                 });
                 return;
             }
 
             update(ref(db, `games/${gameState.code}`), {
-                currentQuestion: idx,
+                currentQuestion: pos,
                 phase: 'question',
                 isAnswerShown: false,
                 answers: {},
@@ -1434,25 +1953,25 @@
         //  MOSTRAR PREGUNTA
         // ============================================================
 
-        function renderQuestionUI(index, questionStartTime) {
-            const q = QUESTIONS[index];
+        function renderQuestionUI(pos, questionStartTime) {
+            const qIdx = gameState.questionSet[pos];
+            const q = QUESTIONS[qIdx];
             const section = q.section;
             const duration = SECTION_TIMERS[section] || 20;
             currentQuestionStartTime = questionStartTime || Date.now();
             myAnsweredThisQuestion = false;
 
             document.getElementById('questionNumber').textContent =
-                `Pregunta ${index + 1} / ${QUESTIONS.length}`;
+                `Pregunta ${pos + 1} / ${gameState.questionSet.length}`;
             document.getElementById('questionText').textContent = q.question;
 
-            const letters = ['A', 'B', 'C', 'D'];
             const container = document.getElementById('questionOptions');
             container.innerHTML = '';
 
             q.options.forEach((opt, i) => {
                 const btn = document.createElement('button');
                 btn.className = 'question-option';
-                btn.innerHTML = `<span class="letter">${letters[i]}</span> ${opt}`;
+                btn.innerHTML = `<span class="letter">${LETTERS[i]}</span> ${opt}`;
                 btn.dataset.index = i;
                 btn.onclick = () => selectAnswer(i);
                 container.appendChild(btn);
@@ -1465,7 +1984,7 @@
             document.getElementById('presenterResultControls').classList.add('hidden');
             document.getElementById('playerResultStatus').classList.add('hidden');
 
-            const progress = (index / QUESTIONS.length) * 100;
+            const progress = (pos / gameState.questionSet.length) * 100;
             document.getElementById('progressFill').style.width = progress + '%';
 
             if (localTimerInterval) clearInterval(localTimerInterval);
@@ -1494,8 +2013,9 @@
             const playerId = getPlayerId();
             if (gameState.answers && gameState.answers[playerId]) return;
 
-            const idx = gameState.currentQuestion;
-            const q = QUESTIONS[idx];
+            const pos = gameState.currentQuestion;
+            const qIdx = gameState.questionSet[pos];
+            const q = QUESTIONS[qIdx];
             const isCorrect = index === q.correct;
             const responseTime = Date.now() - (currentQuestionStartTime || Date.now());
 
@@ -1555,8 +2075,9 @@
             update(ref(db, `games/${gameState.code}`), { isAnswerShown: true });
         }
 
-        function revealAnswer(index) {
-            const q = QUESTIONS[index];
+        function revealAnswer(pos) {
+            const qIdx = gameState.questionSet[pos];
+            const q = QUESTIONS[qIdx];
             const options = document.querySelectorAll('.question-option');
             options.forEach((el, i) => {
                 el.classList.add('disabled');
@@ -1571,8 +2092,9 @@
         //  MOSTRAR RESULTADOS
         // ============================================================
 
-        function renderResults(index) {
-            const q = QUESTIONS[index];
+        function renderResults(pos) {
+            const qIdx = gameState.questionSet[pos];
+            const q = QUESTIONS[qIdx];
             const totalPlayers = gameState.players.length;
             let correctCount = 0;
 
@@ -1580,7 +2102,7 @@
                 if (a.correct) correctCount++;
             });
 
-            const correctLetter = ['A', 'B', 'C', 'D'][q.correct];
+            const correctLetter = LETTERS[q.correct];
             document.getElementById('resultCorrectAnswer').textContent =
                 `✅ Respuesta Correcta: ${correctLetter}`;
             document.getElementById('resultExplanation').textContent = q.explanation;
@@ -1631,23 +2153,18 @@
         }
 
         // ============================================================
-        //  SECCIÓN COMPLETADA
+        //  SECCIÓN COMPLETADA (usada también como intro de tema)
         // ============================================================
 
         function renderSectionComplete(section) {
             const titles = {
-                1: '¡Sección 1 Completada!',
-                2: '¡Sección 2 Completada!',
-                3: '¡Sección 3 Completada!'
-            };
-            const subtitles = {
-                1: 'Fundamentos de Demanda e Inventario',
-                2: 'DDMRP, Lead Time y Variabilidad',
-                3: 'El Reto del Planeador'
+                1: `Tema: ${TOPIC_LABELS[1]}`,
+                2: `Tema: ${TOPIC_LABELS[2]}`,
+                3: `Tema: ${TOPIC_LABELS[3]}`
             };
 
-            document.getElementById('sectionCompleteTitle').textContent = titles[section];
-            document.getElementById('sectionCompleteSubtitle').textContent = subtitles[section];
+            document.getElementById('sectionCompleteTitle').textContent = titles[section] || 'Nuevo tema';
+            document.getElementById('sectionCompleteSubtitle').textContent = 'Prepárense para las próximas preguntas';
 
             const sectionKey = 'section' + section;
             const list = document.getElementById('sectionRankingList');
@@ -1727,8 +2244,8 @@
 
             document.getElementById('statAvgScore').textContent = avgScore.toLocaleString();
             document.getElementById('statAvgCorrect').textContent = `${avgCorrect}%`;
-            document.getElementById('statHardest').textContent = 'Pregunta 15';
-            document.getElementById('statEasiest').textContent = 'Pregunta 3';
+            document.getElementById('statHardest').textContent = `${gameState.questionSet.length} preguntas`;
+            document.getElementById('statEasiest').textContent = `${gameState.players.length} jugadores`;
         }
 
         // ============================================================
@@ -1798,6 +2315,10 @@
         window.showAnswer = showAnswer;
         window.showRankingOnly = showRankingOnly;
         window.resetGame = resetGame;
+        window.reviewNext = reviewNext;
+        window.reviewPrev = reviewPrev;
+        window.skipReview = skipReview;
+        window.updateQuestionCountHint = updateQuestionCountHint;
 
         // ============================================================
         //  INICIALIZAR
@@ -1806,6 +2327,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('homeSection').style.display = 'block';
             document.getElementById('homeSection').classList.add('active');
+
+            buildTopicChecklist();
 
             document.getElementById('playerNameInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') joinGame();
