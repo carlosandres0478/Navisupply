@@ -771,7 +771,7 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
         // ============================================================
         //  BANCO DE PREGUNTAS
         // ============================================================
@@ -1068,7 +1068,31 @@
         }];
 
         // ============================================================
-        //  ESTADO DEL JUEGO
+        //  FIREBASE
+        // ============================================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+        import {
+            getDatabase, ref, set, update, get, onValue
+        } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCz32rioKnpjvdci4wFb-lQk6F7rJUZmlU",
+            authDomain: "navysupply-337c4.firebaseapp.com",
+            databaseURL: "https://navysupply-337c4-default-rtdb.firebaseio.com",
+            projectId: "navysupply-337c4",
+            storageBucket: "navysupply-337c4.firebasestorage.app",
+            messagingSenderId: "420338902980",
+            appId: "1:420338902980:web:5de6423113b41b2f97e691",
+            measurementId: "G-GSNQTW9457"
+        };
+
+        const firebaseApp = initializeApp(firebaseConfig);
+        const db = getDatabase(firebaseApp);
+
+        const SECTION_TIMERS = { 1: 20, 2: 25, 3: 40 };
+
+        // ============================================================
+        //  ESTADO DEL JUEGO (espejo local de Firebase)
         // ============================================================
         let gameState = {
             code: null,
@@ -1079,18 +1103,18 @@
             currentQuestion: -1,
             scores: {},
             answers: {},
-            questionStartTime: null,
-            isQuestionActive: false,
-            isAnswerShown: false,
             sectionScores: {},
             gameStarted: false,
             finished: false,
             playerName: null
         };
 
-        let timerInterval = null;
-        let questionTimer = 20;
+        let localTimerInterval = null;
         let currentPlayerId = null;
+        let unsubscribeGame = null;
+        let currentQuestionStartTime = null;
+        let myAnsweredThisQuestion = false;
+        let lastRenderedPhase = null;
 
         // ============================================================
         //  FUNCIONES DE UI
@@ -1125,110 +1149,119 @@
         }
 
         // ============================================================
+        //  ESCUCHAR CAMBIOS EN FIREBASE
+        // ============================================================
+
+        function listenToGame(code) {
+            if (unsubscribeGame) {
+                unsubscribeGame();
+                unsubscribeGame = null;
+            }
+            const gameRef = ref(db, 'games/' + code);
+            unsubscribeGame = onValue(gameRef, (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    showError('La partida ya no existe o fue reiniciada.');
+                    return;
+                }
+                renderFromData(data);
+            }, (err) => {
+                showError('Error de conexión con Firebase: ' + err.message);
+            });
+        }
+
+        function renderFromData(data) {
+            gameState.maxPlayers = data.maxPlayers || 10;
+            gameState.players = data.players ?
+                Object.entries(data.players).map(([id, p]) => ({ id, name: p.name, joinedAt: p.joinedAt || 0 }))
+                    .sort((a, b) => a.joinedAt - b.joinedAt) : [];
+            gameState.scores = data.scores || {};
+            gameState.sectionScores = data.sectionScores || {};
+            gameState.answers = data.answers || {};
+            gameState.gameStarted = !!data.gameStarted;
+            gameState.currentQuestion = typeof data.currentQuestion === 'number' ? data.currentQuestion : -1;
+            gameState.finished = !!data.finished;
+
+            const phaseChanged = lastRenderedPhase !== data.phase;
+
+            if (data.phase === 'lobby') {
+                updateLobby();
+                if (phaseChanged) showSection('lobbySection');
+            } else if (data.phase === 'question') {
+                if (phaseChanged) {
+                    myAnsweredThisQuestion = false;
+                    renderQuestionUI(gameState.currentQuestion, data.questionStartTime);
+                    showSection('questionSection');
+                }
+                if (data.isAnswerShown) {
+                    revealAnswer(gameState.currentQuestion);
+                }
+            } else if (data.phase === 'result') {
+                if (phaseChanged) {
+                    if (localTimerInterval) clearInterval(localTimerInterval);
+                    renderResults(gameState.currentQuestion);
+                    showSection('resultSection');
+                }
+            } else if (data.phase === 'sectionComplete') {
+                if (phaseChanged) {
+                    if (localTimerInterval) clearInterval(localTimerInterval);
+                    renderSectionComplete(data.section);
+                    showSection('sectionCompleteSection');
+                }
+            } else if (data.phase === 'final') {
+                if (phaseChanged) {
+                    if (localTimerInterval) clearInterval(localTimerInterval);
+                    renderFinal();
+                    showSection('finalSection');
+                }
+            }
+
+            lastRenderedPhase = data.phase;
+        }
+
+        // ============================================================
         //  CREAR PARTIDA (PRESENTADOR)
         // ============================================================
 
         function createGame() {
             const code = Math.floor(100000 + Math.random() * 900000).toString();
+            gameState.mode = 'presenter';
             gameState.code = code;
-            gameState.maxPlayers = parseInt(document.getElementById('maxPlayers').value);
-            gameState.gameMode = document.getElementById('gameMode').value;
-            gameState.players = [];
-            gameState.scores = {};
-            gameState.sectionScores = {};
-            gameState.currentQuestion = -1;
-            gameState.gameStarted = false;
-            gameState.finished = false;
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+            const gameMode = document.getElementById('gameMode').value;
 
-            document.getElementById('gameCodeDisplay').textContent = code;
-            document.getElementById('lobbyCode').textContent = code;
-
-            // Guardar en localStorage para que otros dispositivos puedan verlo
-            localStorage.setItem('navitrans_game', JSON.stringify({
+            const initialData = {
                 code: code,
-                players: [],
-                maxPlayers: gameState.maxPlayers,
-                gameMode: gameState.gameMode,
+                maxPlayers: maxPlayers,
+                gameMode: gameMode,
+                players: {},
                 gameStarted: false,
-                currentQuestion: -1
-            }));
+                currentQuestion: -1,
+                phase: 'lobby',
+                isAnswerShown: false,
+                questionStartTime: null,
+                answers: {},
+                scores: {},
+                sectionScores: {},
+                finished: false,
+                createdAt: Date.now()
+            };
 
-            showSection('lobbySection');
-            document.getElementById('homeSection').classList.remove('active');
+            set(ref(db, 'games/' + code), initialData).then(() => {
+                document.getElementById('gameCodeDisplay').textContent = code;
+                document.getElementById('lobbyCode').textContent = code;
 
-            document.getElementById('presenterLobbyControls').classList.remove('hidden');
-            document.getElementById('playerLobbyStatus').classList.add('hidden');
+                showSection('lobbySection');
+                document.getElementById('homeSection').classList.remove('active');
 
-            updateLobby();
+                document.getElementById('presenterLobbyControls').classList.remove('hidden');
+                document.getElementById('playerLobbyStatus').classList.add('hidden');
 
-            // Iniciar escucha de cambios para detectar nuevos jugadores
-            startListening();
-        }
-
-        // ============================================================
-        //  ESCUCHAR CAMBIOS (para sincronizar entre dispositivos)
-        // ============================================================
-
-        function startListening() {
-            // Escuchar cambios en localStorage (para sincronizar entre pestañas/dispositivos)
-            window.addEventListener('storage', function(e) {
-                if (e.key === 'navitrans_game') {
-                    const data = JSON.parse(e.newValue);
-                    if (data) {
-                        // Actualizar lista de jugadores
-                        gameState.players = data.players || [];
-                        gameState.gameStarted = data.gameStarted || false;
-                        gameState.currentQuestion = data.currentQuestion || -1;
-                        updateLobby();
-
-                        // Si el juego ya empezó y estamos en el lobby, mostrar pregunta
-                        if (gameState.gameStarted && document.getElementById('lobbySection').classList.contains(
-                            'active')) {
-                            if (gameState.currentQuestion >= 0 && gameState.currentQuestion < QUESTIONS.length) {
-                                showQuestion(gameState.currentQuestion);
-                            } else if (gameState.currentQuestion >= QUESTIONS.length) {
-                                finishGame();
-                            }
-                        }
-                    }
-                }
+                lastRenderedPhase = null;
+                listenToGame(code);
+            }).catch(err => {
+                showError('No se pudo crear la partida: ' + err.message);
             });
-
-            // Escuchar mensajes del BroadcastChannel (para comunicación entre pestañas del mismo navegador)
-            try {
-                const channel = new BroadcastChannel('navitrans_channel');
-                channel.onmessage = function(e) {
-                    const data = e.data;
-                    if (data.type === 'player_joined') {
-                        // Actualizar lista de jugadores
-                        const gameData = JSON.parse(localStorage.getItem('navitrans_game'));
-                        if (gameData) {
-                            gameState.players = gameData.players || [];
-                            updateLobby();
-                        }
-                    }
-                    if (data.type === 'game_started') {
-                        gameState.gameStarted = true;
-                        gameState.currentQuestion = data.currentQuestion || -1;
-                        if (gameState.currentQuestion >= 0 && gameState.currentQuestion < QUESTIONS.length) {
-                            showQuestion(gameState.currentQuestion);
-                        }
-                    }
-                    if (data.type === 'next_question') {
-                        gameState.currentQuestion = data.questionIndex;
-                        if (gameState.currentQuestion < QUESTIONS.length) {
-                            showQuestion(gameState.currentQuestion);
-                        }
-                    }
-                    if (data.type === 'question_closed') {
-                        // Mostrar resultados
-                        showResults(data);
-                    }
-                };
-            } catch (e) {
-                // BroadcastChannel no soportado
-                console.log('BroadcastChannel no soportado');
-            }
         }
 
         // ============================================================
@@ -1236,7 +1269,7 @@
         // ============================================================
 
         function joinGame() {
-            const code = document.getElementById('gameCodeInput').value.toUpperCase().trim();
+            const code = document.getElementById('gameCodeInput').value.trim();
             const name = document.getElementById('playerNameInput').value.trim();
 
             if (!code) {
@@ -1252,67 +1285,54 @@
                 return;
             }
 
-            // Verificar si existe la partida
-            const gameData = localStorage.getItem('navitrans_game');
-            if (!gameData) {
-                showError('No existe una partida activa. El presentador debe crearla primero.');
-                return;
-            }
-
-            const game = JSON.parse(gameData);
-            if (game.code !== code) {
-                showError('Código de partida incorrecto');
-                return;
-            }
-
-            // Verificar si el nombre ya existe
-            if (game.players.some(p => p.name === name)) {
-                showError('Ese nombre ya está en uso');
-                return;
-            }
-
-            // Verificar límite de jugadores
-            if (game.players.length >= game.maxPlayers) {
-                showError('La partida está llena');
-                return;
-            }
-
-            // Unir jugador
-            const playerId = getPlayerId();
-            const newPlayer = { id: playerId, name: name };
-            game.players.push(newPlayer);
-
-            // Guardar en localStorage
-            localStorage.setItem('navitrans_game', JSON.stringify(game));
-
-            gameState.players = game.players;
-            gameState.playerName = name;
-            gameState.code = code;
-            gameState.maxPlayers = game.maxPlayers;
-
-            document.getElementById('gameCodeDisplay').textContent = code;
-
-            // Notificar a otros dispositivos
-            try {
-                const channel = new BroadcastChannel('navitrans_channel');
-                channel.postMessage({ type: 'player_joined', player: newPlayer });
-            } catch (e) {}
-
-            showSection('lobbySection');
-            document.getElementById('homeSection').classList.remove('active');
-
-            document.getElementById('presenterLobbyControls').classList.add('hidden');
-            document.getElementById('playerLobbyStatus').classList.remove('hidden');
-
-            updateLobby();
-
-            // Si el presentador ya inició, mostrar mensaje
-            if (game.gameStarted) {
-                document.getElementById('playerLobbyStatus').querySelector('div').textContent = 'La partida ya comenzó...';
-                if (game.currentQuestion >= 0 && game.currentQuestion < QUESTIONS.length) {
-                    showQuestion(game.currentQuestion);
+            const gameRef = ref(db, 'games/' + code);
+            get(gameRef).then((snapshot) => {
+                const game = snapshot.val();
+                if (!game) {
+                    showError('No existe una partida activa con ese código.');
+                    return;
                 }
-            }
+
+                const players = game.players || {};
+
+                if (Object.values(players).some(p => p.name === name)) {
+                    showError('Ese nombre ya está en uso');
+                    return;
+                }
+
+                if (Object.keys(players).length >= game.maxPlayers) {
+                    showError('La partida está llena');
+                    return;
+                }
+
+                const playerId = getPlayerId();
+
+                set(ref(db, `games/${code}/players/${playerId}`), { name: name, joinedAt: Date.now() }).then(() => {
+                    gameState.mode = 'player';
+                    gameState.playerName = name;
+                    gameState.code = code;
+                    gameState.maxPlayers = game.maxPlayers;
+
+                    document.getElementById('gameCodeDisplay').textContent = code;
+
+                    showSection('lobbySection');
+                    document.getElementById('homeSection').classList.remove('active');
+
+                    document.getElementById('presenterLobbyControls').classList.add('hidden');
+                    document.getElementById('playerLobbyStatus').classList.remove('hidden');
+
+                    if (game.gameStarted) {
+                        document.getElementById('playerLobbyStatus').querySelector('div').textContent = 'La partida ya comenzó...';
+                    }
+
+                    lastRenderedPhase = null;
+                    listenToGame(code);
+                }).catch(err => {
+                    showError('No se pudo unir a la partida: ' + err.message);
+                });
+            }).catch(err => {
+                showError('Error al buscar la partida: ' + err.message);
+            });
         }
 
         // ============================================================
@@ -1366,86 +1386,60 @@
                 return;
             }
 
-            gameState.gameStarted = true;
-            gameState.currentQuestion = -1;
-
-            // Guardar en localStorage
-            const gameData = JSON.parse(localStorage.getItem('navitrans_game'));
-            if (gameData) {
-                gameData.gameStarted = true;
-                gameData.currentQuestion = -1;
-                localStorage.setItem('navitrans_game', JSON.stringify(gameData));
-            }
-
-            // Notificar a todos
-            try {
-                const channel = new BroadcastChannel('navitrans_channel');
-                channel.postMessage({ type: 'game_started' });
-            } catch (e) {}
-
-            document.getElementById('presenterLobbyControls').classList.add('hidden');
-
-            // Mostrar primera pregunta después de 2 segundos
-            setTimeout(() => {
-                nextQuestion();
-            }, 2000);
+            update(ref(db, `games/${gameState.code}`), {
+                gameStarted: true,
+                currentQuestion: -1,
+                phase: 'lobby'
+            }).then(() => {
+                document.getElementById('presenterLobbyControls').classList.add('hidden');
+                setTimeout(() => {
+                    nextQuestion();
+                }, 2000);
+            });
         }
 
         // ============================================================
-        //  SIGUIENTE PREGUNTA
+        //  SIGUIENTE PREGUNTA (PRESENTADOR)
         // ============================================================
 
         function nextQuestion() {
             if (gameState.finished) return;
 
-            gameState.currentQuestion++;
+            let idx = gameState.currentQuestion + 1;
 
-            if (gameState.currentQuestion >= QUESTIONS.length) {
+            if (idx >= QUESTIONS.length) {
                 finishGame();
                 return;
             }
 
-            // Verificar si es inicio de sección
-            if (gameState.currentQuestion === 0 ||
-                gameState.currentQuestion === 10 ||
-                gameState.currentQuestion === 20) {
-                showSectionComplete(Math.floor(gameState.currentQuestion / 10) + 1);
+            if (idx === 0 || idx === 10 || idx === 20) {
+                update(ref(db, `games/${gameState.code}`), {
+                    currentQuestion: idx,
+                    phase: 'sectionComplete',
+                    section: Math.floor(idx / 10) + 1
+                });
                 return;
             }
 
-            // Guardar estado
-            const gameData = JSON.parse(localStorage.getItem('navitrans_game'));
-            if (gameData) {
-                gameData.currentQuestion = gameState.currentQuestion;
-                localStorage.setItem('navitrans_game', JSON.stringify(gameData));
-            }
-
-            // Notificar
-            try {
-                const channel = new BroadcastChannel('navitrans_channel');
-                channel.postMessage({
-                    type: 'next_question',
-                    questionIndex: gameState.currentQuestion
-                });
-            } catch (e) {}
-
-            showQuestion(gameState.currentQuestion);
+            update(ref(db, `games/${gameState.code}`), {
+                currentQuestion: idx,
+                phase: 'question',
+                isAnswerShown: false,
+                answers: {},
+                questionStartTime: Date.now()
+            });
         }
 
         // ============================================================
         //  MOSTRAR PREGUNTA
         // ============================================================
 
-        function showQuestion(index) {
+        function renderQuestionUI(index, questionStartTime) {
             const q = QUESTIONS[index];
             const section = q.section;
-            const timers = { 1: 20, 2: 25, 3: 40 };
-            questionTimer = timers[section] || 20;
-
-            gameState.isQuestionActive = true;
-            gameState.isAnswerShown = false;
-            gameState.answers = {};
-            gameState.questionStartTime = Date.now();
+            const duration = SECTION_TIMERS[section] || 20;
+            currentQuestionStartTime = questionStartTime || Date.now();
+            myAnsweredThisQuestion = false;
 
             document.getElementById('questionNumber').textContent =
                 `Pregunta ${index + 1} / ${QUESTIONS.length}`;
@@ -1464,35 +1458,31 @@
                 container.appendChild(btn);
             });
 
-            // Actualizar timer
-            document.getElementById('questionTimer').textContent = questionTimer;
             document.getElementById('questionTimer').classList.remove('warning');
 
-            // Mostrar controles del presentador
             const isPresenter = gameState.mode === 'presenter';
             document.getElementById('presenterQuestionControls').classList.toggle('hidden', !isPresenter);
             document.getElementById('presenterResultControls').classList.add('hidden');
             document.getElementById('playerResultStatus').classList.add('hidden');
 
-            showSection('questionSection');
-
-            // Iniciar timer
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                questionTimer--;
-                document.getElementById('questionTimer').textContent = questionTimer;
-                if (questionTimer <= 5) {
-                    document.getElementById('questionTimer').classList.add('warning');
-                }
-                if (questionTimer <= 0) {
-                    clearInterval(timerInterval);
-                    closeQuestion();
-                }
-            }, 1000);
-
-            // Actualizar progreso
-            const progress = ((index) / QUESTIONS.length) * 100;
+            const progress = (index / QUESTIONS.length) * 100;
             document.getElementById('progressFill').style.width = progress + '%';
+
+            if (localTimerInterval) clearInterval(localTimerInterval);
+            function updateTimerDisplay() {
+                const elapsed = Math.floor((Date.now() - currentQuestionStartTime) / 1000);
+                const remaining = Math.max(0, duration - elapsed);
+                document.getElementById('questionTimer').textContent = remaining;
+                document.getElementById('questionTimer').classList.toggle('warning', remaining <= 5);
+                if (remaining <= 0) {
+                    clearInterval(localTimerInterval);
+                    if (gameState.mode === 'presenter') {
+                        closeQuestion();
+                    }
+                }
+            }
+            updateTimerDisplay();
+            localTimerInterval = setInterval(updateTimerDisplay, 1000);
         }
 
         // ============================================================
@@ -1500,60 +1490,31 @@
         // ============================================================
 
         function selectAnswer(index) {
-            if (!gameState.isQuestionActive || gameState.isAnswerShown) return;
-
+            if (myAnsweredThisQuestion) return;
             const playerId = getPlayerId();
-            const playerName = gameState.playerName || 'Jugador';
+            if (gameState.answers && gameState.answers[playerId]) return;
 
-            // Buscar el jugador en la lista
-            const player = gameState.players.find(p => p.id === playerId);
-            const playerNameFinal = player ? player.name : playerName;
-
-            // Verificar si ya respondió
-            if (gameState.answers[playerId]) return;
-
-            const q = QUESTIONS[gameState.currentQuestion];
+            const idx = gameState.currentQuestion;
+            const q = QUESTIONS[idx];
             const isCorrect = index === q.correct;
-            const responseTime = Date.now() - gameState.questionStartTime;
+            const responseTime = Date.now() - (currentQuestionStartTime || Date.now());
 
-            // Calcular puntaje
             let score = 0;
-            let bonus = 0;
             if (isCorrect) {
                 const baseScore = 1000;
-                const maxTime = questionTimer * 1000;
-                bonus = Math.max(0, Math.round((1 - responseTime / maxTime) * 500));
+                const maxTime = (SECTION_TIMERS[q.section] || 20) * 1000;
+                const bonus = Math.max(0, Math.round((1 - responseTime / maxTime) * 500));
                 score = baseScore + bonus;
             }
 
-            // Guardar respuesta
-            gameState.answers[playerId] = {
-                answer: index,
-                correct: isCorrect,
-                time: responseTime,
-                score: score
-            };
+            myAnsweredThisQuestion = true;
 
-            // Actualizar puntaje
-            gameState.scores[playerId] = (gameState.scores[playerId] || 0) + score;
-
-            // Actualizar puntaje por sección
-            const section = q.section;
-            const sectionKey = 'section' + section;
-            if (!gameState.sectionScores[playerId]) {
-                gameState.sectionScores[playerId] = { section1: 0, section2: 0, section3: 0 };
-            }
-            gameState.sectionScores[playerId][sectionKey] =
-                (gameState.sectionScores[playerId][sectionKey] || 0) + score;
-
-            // Marcar opción seleccionada
             const options = document.querySelectorAll('.question-option');
             options.forEach((el, i) => {
                 el.classList.add('disabled');
                 if (i === index) el.classList.add('selected');
             });
 
-            // Mostrar feedback visual
             if (isCorrect) {
                 options[index].classList.add('correct');
                 createConfetti();
@@ -1562,14 +1523,19 @@
                 options[q.correct].classList.add('correct');
             }
 
-            gameState.isAnswerShown = true;
+            const prevScore = (gameState.scores && gameState.scores[playerId]) || 0;
+            const sectionKey = 'section' + q.section;
+            const prevSectionScore = (gameState.sectionScores && gameState.sectionScores[playerId] &&
+                gameState.sectionScores[playerId][sectionKey]) || 0;
 
-            // Cerrar automáticamente después de 3 segundos
-            setTimeout(() => {
-                if (gameState.isQuestionActive) {
-                    closeQuestion();
-                }
-            }, 3000);
+            const updates = {};
+            updates[`games/${gameState.code}/answers/${playerId}`] = {
+                answer: index, correct: isCorrect, time: responseTime, score: score
+            };
+            updates[`games/${gameState.code}/scores/${playerId}`] = prevScore + score;
+            updates[`games/${gameState.code}/sectionScores/${playerId}/${sectionKey}`] = prevSectionScore + score;
+
+            update(ref(db), updates);
         }
 
         // ============================================================
@@ -1577,20 +1543,43 @@
         // ============================================================
 
         function closeQuestion() {
-            if (!gameState.isQuestionActive) return;
+            if (localTimerInterval) clearInterval(localTimerInterval);
+            update(ref(db, `games/${gameState.code}`), { phase: 'result' });
+        }
 
-            clearInterval(timerInterval);
-            gameState.isQuestionActive = false;
+        // ============================================================
+        //  MOSTRAR RESPUESTA (PRESENTADOR)
+        // ============================================================
 
-            const q = QUESTIONS[gameState.currentQuestion];
+        function showAnswer() {
+            update(ref(db, `games/${gameState.code}`), { isAnswerShown: true });
+        }
+
+        function revealAnswer(index) {
+            const q = QUESTIONS[index];
+            const options = document.querySelectorAll('.question-option');
+            options.forEach((el, i) => {
+                el.classList.add('disabled');
+                if (i === q.correct) el.classList.add('correct');
+                if (el.classList.contains('selected') && i !== q.correct) {
+                    el.classList.add('wrong');
+                }
+            });
+        }
+
+        // ============================================================
+        //  MOSTRAR RESULTADOS
+        // ============================================================
+
+        function renderResults(index) {
+            const q = QUESTIONS[index];
             const totalPlayers = gameState.players.length;
             let correctCount = 0;
 
-            Object.values(gameState.answers).forEach(a => {
+            Object.values(gameState.answers || {}).forEach(a => {
                 if (a.correct) correctCount++;
             });
 
-            // Mostrar resultados
             const correctLetter = ['A', 'B', 'C', 'D'][q.correct];
             document.getElementById('resultCorrectAnswer').textContent =
                 `✅ Respuesta Correcta: ${correctLetter}`;
@@ -1604,34 +1593,7 @@
             document.getElementById('presenterQuestionControls').classList.add('hidden');
             document.getElementById('presenterResultControls').classList.toggle('hidden', !isPresenter);
             document.getElementById('playerResultStatus').classList.toggle('hidden', isPresenter);
-
-            showSection('resultSection');
         }
-
-        // ============================================================
-        //  MOSTRAR RESPUESTA (PRESENTADOR)
-        // ============================================================
-
-        function showAnswer() {
-            if (gameState.isAnswerShown) return;
-
-            const q = QUESTIONS[gameState.currentQuestion];
-            const options = document.querySelectorAll('.question-option');
-
-            options.forEach((el, i) => {
-                el.classList.add('disabled');
-                if (i === q.correct) el.classList.add('correct');
-                if (el.classList.contains('selected') && i !== q.correct) {
-                    el.classList.add('wrong');
-                }
-            });
-
-            gameState.isAnswerShown = true;
-        }
-
-        // ============================================================
-        //  MOSTRAR RANKING SOLO
-        // ============================================================
 
         function showRankingOnly() {
             updateRankingList('resultRankingList');
@@ -1672,7 +1634,7 @@
         //  SECCIÓN COMPLETADA
         // ============================================================
 
-        function showSectionComplete(section) {
+        function renderSectionComplete(section) {
             const titles = {
                 1: '¡Sección 1 Completada!',
                 2: '¡Sección 2 Completada!',
@@ -1714,8 +1676,6 @@
             const isPresenter = gameState.mode === 'presenter';
             document.getElementById('presenterSectionControls').classList.toggle('hidden', !isPresenter);
             document.getElementById('playerSectionStatus').classList.toggle('hidden', isPresenter);
-
-            showSection('sectionCompleteSection');
         }
 
         // ============================================================
@@ -1723,10 +1683,10 @@
         // ============================================================
 
         function finishGame() {
-            gameState.finished = true;
-            gameState.isQuestionActive = false;
-            clearInterval(timerInterval);
+            update(ref(db, `games/${gameState.code}`), { phase: 'final', finished: true });
+        }
 
+        function renderFinal() {
             const rankings = gameState.players
                 .map(p => ({
                     name: p.name,
@@ -1756,8 +1716,9 @@
                 list.appendChild(li);
             });
 
-            const totalCorrect = Object.values(gameState.answers).filter(a => a.correct).length;
-            const totalAnswers = Object.values(gameState.answers).length;
+            const answersArr = Object.values(gameState.answers || {});
+            const totalCorrect = answersArr.filter(a => a.correct).length;
+            const totalAnswers = answersArr.length;
             const avgCorrect = totalAnswers > 0 ? Math.round((totalCorrect / totalAnswers) * 100) : 0;
             const avgScore = gameState.players.length > 0 ?
                 Math.round(gameState.players.reduce((sum, p) => sum + (gameState.scores[p.id] || 0), 0) / gameState.players
@@ -1768,8 +1729,6 @@
             document.getElementById('statAvgCorrect').textContent = `${avgCorrect}%`;
             document.getElementById('statHardest').textContent = 'Pregunta 15';
             document.getElementById('statEasiest').textContent = 'Pregunta 3';
-
-            showSection('finalSection');
         }
 
         // ============================================================
@@ -1777,30 +1736,11 @@
         // ============================================================
 
         function resetGame() {
-            gameState = {
-                code: null,
-                mode: 'presenter',
-                players: [],
-                maxPlayers: 10,
-                gameMode: 'competencia',
-                currentQuestion: -1,
-                scores: {},
-                answers: {},
-                questionStartTime: null,
-                isQuestionActive: false,
-                isAnswerShown: false,
-                sectionScores: {},
-                gameStarted: false,
-                finished: false,
-                playerName: null
-            };
-            clearInterval(timerInterval);
-            localStorage.removeItem('navitrans_game');
-            document.getElementById('gameCodeDisplay').textContent = '---';
-            document.getElementById('homeSection').classList.add('active');
-            document.querySelectorAll('.game-section').forEach(el => el.classList.remove('active'));
-            document.getElementById('homeSection').style.display = 'block';
-            document.getElementById('errorMessage').style.display = 'none';
+            if (unsubscribeGame) {
+                unsubscribeGame();
+                unsubscribeGame = null;
+            }
+            if (localTimerInterval) clearInterval(localTimerInterval);
             location.reload();
         }
 
@@ -1847,6 +1787,19 @@
         }
 
         // ============================================================
+        //  EXPONER FUNCIONES AL SCOPE GLOBAL (necesario por type="module")
+        // ============================================================
+        window.setMode = setMode;
+        window.createGame = createGame;
+        window.joinGame = joinGame;
+        window.startGame = startGame;
+        window.nextQuestion = nextQuestion;
+        window.closeQuestion = closeQuestion;
+        window.showAnswer = showAnswer;
+        window.showRankingOnly = showRankingOnly;
+        window.resetGame = resetGame;
+
+        // ============================================================
         //  INICIALIZAR
         // ============================================================
 
@@ -1861,30 +1814,7 @@
                 if (e.key === 'Enter') joinGame();
             });
 
-            // Verificar si hay una partida activa
-            const gameData = localStorage.getItem('navitrans_game');
-            if (gameData) {
-                const game = JSON.parse(gameData);
-                if (game && game.code) {
-                    document.getElementById('gameCodeDisplay').textContent = game.code;
-                    // Si estamos en modo presentador, mostrar el lobby
-                    if (gameState.mode === 'presenter') {
-                        gameState.code = game.code;
-                        gameState.players = game.players || [];
-                        gameState.maxPlayers = game.maxPlayers;
-                        gameState.gameStarted = game.gameStarted || false;
-                        showSection('lobbySection');
-                        document.getElementById('homeSection').classList.remove('active');
-                        document.getElementById('lobbyCode').textContent = game.code;
-                        updateLobby();
-                        if (game.gameStarted) {
-                            document.getElementById('presenterLobbyControls').classList.add('hidden');
-                        }
-                    }
-                }
-            }
-
-            console.log('🎮 NAVITRANS PLANNING CHALLENGE cargado');
+            console.log('🎮 NAVITRANS PLANNING CHALLENGE cargado (sincronizado con Firebase)');
             console.log(`📚 ${QUESTIONS.length} preguntas disponibles`);
             console.log('📱 Comparte la URL con tu equipo: https://carlosandres0478.github.io/Navisupply/');
         });
