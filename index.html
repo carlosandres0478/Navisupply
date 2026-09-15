@@ -987,7 +987,7 @@
             options: [
                 'Predecir exactamente cuánto venderá cada SKU',
                 'Estimar el comportamiento futuro de la demanda utilizando información disponible',
-                'Garantizar que nunca exista inventario',
+                'Garantizar que el inventario se mantenga siempre en cero',
                 'Comprar automáticamente todo lo que se pronostique'
             ],
             correct: 1,
@@ -996,10 +996,10 @@
             section: 1,
             question: 'Si un SKU tiene ventas iguales a cero durante varios meses, ¿qué debemos asumir inmediatamente?',
             options: [
-                'Que el SKU no tiene demanda',
-                'Que debe eliminarse',
+                'Que el SKU definitivamente perdió toda su demanda de forma permanente',
+                'Que debe eliminarse del catálogo sin más análisis',
                 'Que debemos investigar si hubo stockout, obsolescencia u otra causa',
-                'Que el forecast debe ser cero'
+                'Que el forecast debe ajustarse automáticamente a cero'
             ],
             correct: 2,
             explanation: 'Las ventas cero pueden deberse a múltiples causas. Es importante investigar.'
@@ -1019,10 +1019,10 @@
             section: 1,
             question: '¿Qué representa principalmente la Zona Amarilla?',
             options: [
-                'Inventario obsoleto',
-                'Consumo esperado durante el Lead Time',
-                'Inventario máximo permitido',
-                'Demanda anual'
+                'El inventario que ya se considera obsoleto o de lenta rotación',
+                'El consumo esperado durante el Lead Time de reposición',
+                'El inventario máximo permitido antes de considerarse exceso',
+                'La demanda total proyectada para todo el año'
             ],
             correct: 1,
             explanation: 'La Zona Amarilla representa el consumo esperado durante el Lead Time.'
@@ -1036,10 +1036,10 @@
             section: 1,
             question: 'Un WAPE alto generalmente indica:',
             options: [
-                'Error importante del forecast respecto a la demanda real',
-                'Inventario demasiado alto',
-                'Lead Time demasiado largo',
-                'Incumplimiento del proveedor'
+                'Un error importante del forecast respecto a la demanda real',
+                'Un inventario acumulado demasiado alto para el nivel de venta',
+                'Un Lead Time de compra demasiado largo para el SKU',
+                'Un incumplimiento reiterado en las entregas del proveedor'
             ],
             correct: 0,
             explanation: 'WAPE alto indica que el forecast tiene un error significativo.'
@@ -1047,10 +1047,10 @@
             section: 1,
             question: '¿Por qué no debemos utilizar exactamente el mismo modelo de forecast para todos los SKU?',
             options: [
-                'Porque todos tienen diferente precio',
-                'Porque cada SKU puede tener comportamientos diferentes',
-                'Porque Excel no puede manejar tantos SKU',
-                'Porque DDMRP lo prohíbe'
+                'Porque cada uno tiene un precio de venta distinto',
+                'Porque cada SKU puede tener un comportamiento de demanda diferente',
+                'Porque las hojas de cálculo tienen un límite de filas por modelo',
+                'Porque la metodología DDMRP no permite modelos distintos por SKU'
             ],
             correct: 1,
             explanation: 'Cada SKU tiene su propio patrón de demanda.'
@@ -1060,8 +1060,8 @@
             options: [
                 'Ventas todos los días con pequeñas variaciones',
                 'Muchos períodos con cero ventas y consumos puntuales',
-                'Crecimiento constante',
-                'Ventas iguales todos los meses'
+                'Un crecimiento sostenido y constante mes a mes',
+                'Ventas prácticamente iguales todos los meses del año'
             ],
             correct: 1,
             explanation: 'Demanda intermitente: períodos con cero ventas y consumos puntuales.'
@@ -1069,10 +1069,10 @@
             section: 1,
             question: '¿Cuál debería ser el objetivo de la planeación de inventario?',
             options: [
-                'Minimizar inventario a cualquier costo',
-                'Maximizar inventario',
+                'Minimizar el inventario disponible sin importar el impacto en servicio',
+                'Maximizar el inventario para nunca quedarse sin stock',
                 'Alcanzar el nivel de servicio requerido utilizando eficientemente el capital',
-                'Comprar todo lo que recomiende el sistema'
+                'Comprar exactamente todo lo que recomiende el sistema sin revisión'
             ],
             correct: 2,
             explanation: 'Balancear el nivel de servicio con la eficiencia en el uso del capital.'
@@ -1086,10 +1086,10 @@
             section: 2,
             question: '¿Por qué un Lead Time calculado con muy pocas órdenes de compra puede ser problemático?',
             options: [
-                'Porque los días siempre están mal',
+                'Porque las fechas de esas órdenes suelen estar mal registradas',
                 'Porque una muestra pequeña puede producir una estimación poco confiable',
-                'Porque DDMRP no acepta Lead Times altos',
-                'Porque ADU cambia automáticamente'
+                'Porque el motor DDMRP rechaza Lead Times basados en pocas OC',
+                'Porque el ADU se recalcula automáticamente al bajar el número de OC'
             ],
             correct: 1,
             explanation: 'Una muestra pequeña no es estadísticamente significativa.'
@@ -1097,10 +1097,10 @@
             section: 2,
             question: 'Si tenemos solamente 2 órdenes de compra históricas, ¿qué deberíamos evitar?',
             options: [
-                'Analizar al proveedor',
-                'Usar esa información como referencia',
+                'Evitar analizar el desempeño histórico del proveedor',
+                'Evitar usar esa información como referencia de ningún tipo',
                 'Tratar un P90 calculado con solo 2 observaciones como altamente confiable',
-                'Compararlo con otros SKU'
+                'Evitar compararlo con el comportamiento de otros SKU similares'
             ],
             correct: 2,
             explanation: 'Con solo 2 observaciones, cualquier percentil no es confiable.'
@@ -1108,10 +1108,10 @@
             section: 2,
             question: '¿Qué diferencia existe entre un proveedor que entrega siempre en 120 días y otro que entrega entre 60 y 180 días?',
             options: [
-                'Ninguna',
+                'Ninguna diferencia relevante para el nivel de protección',
                 'El segundo tiene mayor incertidumbre de suministro',
-                'El primero necesariamente tiene peor servicio',
-                'El segundo siempre necesita menos inventario'
+                'El primero necesariamente tiene un peor nivel de servicio',
+                'El segundo siempre va a necesitar menos inventario de protección'
             ],
             correct: 1,
             explanation: 'El segundo proveedor tiene mayor variabilidad.'
@@ -1125,10 +1125,10 @@
             section: 2,
             question: '¿Por qué debemos tener cuidado al interpretar FactorVar?',
             options: [
-                'Porque representa precio',
+                'Porque en realidad es un indicador de precio de compra',
                 'Porque puede representar volatilidad de demanda y no necesariamente variabilidad del Lead Time',
-                'Porque siempre es cero',
-                'Porque reemplaza ADU'
+                'Porque su valor siempre queda fijo en cero por defecto',
+                'Porque reemplaza por completo el cálculo del ADU'
             ],
             correct: 1,
             explanation: 'FactorVar puede estar influenciado por la volatilidad de la demanda.'
@@ -1142,10 +1142,10 @@
             section: 2,
             question: '¿Por qué separar incertidumbre de demanda e incertidumbre de suministro?',
             options: [
-                'Para complicar el modelo',
+                'Para tener un modelo con más variables de análisis',
                 'Para saber qué componente realmente genera la necesidad de protección',
-                'Para eliminar DDMRP',
-                'Para reducir automáticamente inventario'
+                'Para justificar la eliminación total de la metodología DDMRP',
+                'Para reducir automáticamente el inventario de todas las referencias'
             ],
             correct: 1,
             explanation: 'Permite identificar la fuente real del riesgo.'
@@ -1153,10 +1153,10 @@
             section: 2,
             question: 'Si el modelo tiene factores: Corto=0.30, Medio=0.41, Largo=0.75, ¿qué problema hay al pasar de 75 a 76 días?',
             options: [
-                'Ninguno',
+                'Ningún problema, el cambio es imperceptible en la práctica',
                 'Una discontinuidad importante en el nivel de protección',
-                'ADU cambia automáticamente',
-                'ABC cambia automáticamente'
+                'El ADU cambia automáticamente al cruzar ese umbral',
+                'La clasificación ABC cambia automáticamente al cruzar ese umbral'
             ],
             correct: 1,
             explanation: 'Cambios abruptos en factores generan discontinuidades.'
@@ -1164,10 +1164,10 @@
             section: 2,
             question: '¿Qué debemos hacer antes de declarar que DDMRP V2 es mejor?',
             options: [
-                'Ver si reduce inventario',
-                'Ver si tiene mejores gráficos',
+                'Verificar únicamente si reduce el inventario total',
+                'Verificar únicamente si el dashboard se ve más completo',
                 'Compararlo mediante backtesting considerando servicio e inventario',
-                'Preguntar al proveedor'
+                'Preguntarle directamente al proveedor cuál modelo prefiere'
             ],
             correct: 2,
             explanation: 'El backtesting permite comparar objetivamente ambos modelos.'
@@ -1175,10 +1175,10 @@
             section: 3,
             question: 'Una referencia tiene ADU=19.7, LT=125 días, Factor LT=0.75. El buffer es muy alto. ¿Qué hacer primero?',
             options: [
-                'Bajar manualmente el factor',
-                'Comprar menos',
+                'Bajar manualmente el factor de tiempo sin más análisis',
+                'Reducir la cantidad a comprar en la próxima orden',
                 'Investigar la calidad y origen del Lead Time',
-                'Desactivar DDMRP'
+                'Desactivar el modelo DDMRP para esa referencia'
             ],
             correct: 2,
             explanation: 'Primero verificar la calidad y origen de los datos del Lead Time.'
@@ -1186,10 +1186,10 @@
             section: 3,
             question: 'Una referencia tiene solo 2 OCs: 81 y 125 días. ¿Cuál afirmación es correcta?',
             options: [
-                'P90 = 125 es altamente confiable',
-                'Mediana = 81 necesariamente es correcta',
-                'Existe evidencia insuficiente para confiar en un percentil SKU',
-                'Siempre debemos usar 125'
+                'El P90 de 125 días es altamente confiable con esa muestra',
+                'La mediana de 81 días necesariamente es la correcta',
+                'Existe evidencia insuficiente para confiar en un percentil de esa referencia',
+                'Siempre se debe usar el valor más alto de las dos observaciones'
             ],
             correct: 2,
             explanation: 'Con solo 2 observaciones no se puede confiar en percentiles.'
@@ -1209,10 +1209,10 @@
             section: 3,
             question: 'DDMRP V2 reduce inventario 25% pero Fill Rate cae de 96% a 88%. ¿Conclusión?',
             options: [
-                'V2 es mejor porque reduce inventario',
-                'V2 es mejor porque reduce capital',
-                'V2 necesita revisión',
-                'Fill Rate no importa'
+                'V2 es claramente mejor porque reduce el inventario',
+                'V2 es claramente mejor porque libera capital de trabajo',
+                'V2 necesita revisión antes de adoptarse',
+                'El Fill Rate no es relevante para esta comparación'
             ],
             correct: 2,
             explanation: 'Sacrificar servicio para reducir inventario es una señal de alerta.'
@@ -1220,10 +1220,10 @@
             section: 3,
             question: 'DDMRP V2 mantiene Fill Rate 96% y reduce inventario 18%. ¿Qué significa?',
             options: [
-                'Es evidencia favorable para V2',
-                'El modelo está mal',
-                'Debemos aumentar inventario',
-                'El forecast dejó de funcionar'
+                'Es evidencia favorable para adoptar V2',
+                'Es una señal de que el modelo está calculando mal',
+                'Se debería aumentar el inventario para compensar',
+                'Es una señal de que el forecast dejó de funcionar'
             ],
             correct: 0,
             explanation: 'Mantener servicio mientras se reduce inventario es evidencia positiva.'
@@ -1231,10 +1231,10 @@
             section: 3,
             question: '¿Cuál representa mejor Decision Intelligence?',
             options: [
-                'Tener muchos dashboards',
-                'Usar IA para reemplazar al planeador',
-                'Convertir datos en recomendaciones explicables',
-                'Automatizar todas las compras'
+                'Tener la mayor cantidad posible de dashboards disponibles',
+                'Usar IA para reemplazar por completo el criterio del planeador',
+                'Convertir datos en recomendaciones explicables para el planeador',
+                'Automatizar todas las compras sin ningún tipo de revisión'
             ],
             correct: 2,
             explanation: 'Decision Intelligence transforma datos en recomendaciones accionables.'
@@ -1242,10 +1242,10 @@
             section: 3,
             question: 'Sistema recomienda comprar 500 unidades pero hay poca historia. ¿Qué hacer?',
             options: [
-                'Comprar automáticamente',
-                'Ocultar recomendación',
-                'Mostrar recomendación con nivel de confianza',
-                'Cambiar el histórico'
+                'Comprar automáticamente la cantidad recomendada',
+                'Ocultar la recomendación hasta tener más historia',
+                'Mostrar la recomendación junto con su nivel de confianza',
+                'Reemplazar el histórico disponible por datos estimados'
             ],
             correct: 2,
             explanation: 'Un buen sistema es transparente y muestra el nivel de confianza.'
@@ -1253,10 +1253,10 @@
             section: 3,
             question: '¿Cuál afirmación es más peligrosa?',
             options: [
-                '"El modelo tiene baja confianza."',
-                '"No tenemos suficiente evidencia."',
+                '"El modelo tiene baja confianza en esta recomendación."',
+                '"No tenemos suficiente evidencia para decidir todavía."',
                 '"Comprar 1.250 unidades porque el algoritmo lo dice."',
-                '"El Lead Time tiene alta variabilidad."'
+                '"El Lead Time de este proveedor tiene alta variabilidad."'
             ],
             correct: 2,
             explanation: 'Seguir ciegamente una recomendación sin entenderla es peligroso.'
@@ -1264,10 +1264,10 @@
             section: 3,
             question: 'SKU con riesgo de quiebre alto y evidencia confiable. ¿Primera acción?',
             options: [
-                'Ignorar recomendación',
-                'Analizar oportunidad de reposición',
-                'Comprar el máximo posible',
-                'Cambiar manualmente el forecast'
+                'Ignorar la recomendación hasta el próximo ciclo',
+                'Analizar la oportunidad de reposición de inmediato',
+                'Comprar el máximo posible sin más análisis',
+                'Cambiar manualmente el forecast para ese SKU'
             ],
             correct: 1,
             explanation: 'Ante riesgo de quiebre y evidencia confiable, analizar la reposición.'
@@ -1275,10 +1275,10 @@
             section: 1,
             question: '¿Qué diferencia hay entre demanda dependiente e independiente?',
             options: [
-                'No hay diferencia, son sinónimos',
-                'La dependiente se deriva de otra demanda (ej. componentes); la independiente se pronostica directamente',
-                'La independiente siempre es más alta',
-                'La dependiente solo aplica a materia prima importada'
+                'No hay ninguna diferencia real, son términos sinónimos',
+                'La dependiente se deriva de otra demanda; la independiente se pronostica directamente',
+                'La demanda independiente siempre resulta más alta que la dependiente',
+                'La demanda dependiente solo aplica a materia prima importada'
             ],
             correct: 1,
             explanation: 'La demanda dependiente se calcula a partir de otra (BOM, componentes); la independiente se pronostica con base en el mercado.'
@@ -1286,10 +1286,10 @@
             section: 1,
             question: '¿Qué mide el MAPE (Mean Absolute Percentage Error)?',
             options: [
-                'El costo del inventario',
+                'El costo total de mantener el inventario en bodega',
                 'El error porcentual promedio del forecast respecto a la demanda real',
-                'El nivel de servicio del proveedor',
-                'La rotación de inventario'
+                'El nivel de servicio ofrecido por el proveedor',
+                'La velocidad de rotación del inventario disponible'
             ],
             correct: 1,
             explanation: 'MAPE expresa el error del forecast como un porcentaje promedio, útil para comparar precisión entre SKU.'
@@ -1297,10 +1297,10 @@
             section: 1,
             question: '¿Para qué sirve principalmente la clasificación ABC de inventario?',
             options: [
-                'Para ordenar alfabéticamente los SKU',
-                'Para priorizar el esfuerzo de gestión según el impacto de cada SKU (ventas, valor, criticidad)',
-                'Para decidir el color del empaque',
-                'Para eliminar SKU de baja rotación automáticamente'
+                'Para ordenar los SKU alfabéticamente en el sistema',
+                'Para priorizar el esfuerzo de gestión según el impacto de cada SKU',
+                'Para definir el color del empaque de cada referencia',
+                'Para eliminar automáticamente los SKU de baja rotación'
             ],
             correct: 1,
             explanation: 'La clasificación ABC permite enfocar el control y la precisión donde el impacto en el negocio es mayor.'
@@ -1308,10 +1308,10 @@
             section: 1,
             question: 'Un stockout ocurre cuando:',
             options: [
-                'El inventario supera el máximo permitido',
+                'El inventario supera el máximo permitido por el modelo',
                 'No hay unidades disponibles para atender una demanda',
-                'El proveedor entrega antes de tiempo',
-                'El forecast es mayor a la venta real'
+                'El proveedor entrega la mercancía antes de lo pactado',
+                'El forecast resulta mayor que la venta real registrada'
             ],
             correct: 1,
             explanation: 'Un stockout es la ausencia de inventario disponible cuando existe demanda por atender.'
@@ -1319,10 +1319,10 @@
             section: 1,
             question: '¿Qué es el efecto Bullwhip (látigo) en una cadena de suministro?',
             options: [
-                'Una técnica de pronóstico avanzada',
-                'La amplificación de la variabilidad de la demanda a medida que se aleja del consumidor final',
-                'Un indicador de nivel de servicio',
-                'Un tipo de buffer en DDMRP'
+                'Una técnica avanzada de pronóstico estadístico',
+                'La amplificación de la variabilidad de la demanda al alejarse del consumidor final',
+                'Un indicador que mide el nivel de servicio logrado',
+                'Un tipo particular de buffer usado en DDMRP'
             ],
             correct: 1,
             explanation: 'Pequeñas variaciones en la demanda del consumidor final se amplifican aguas arriba en la cadena, generando sobre-reacciones.'
@@ -1330,10 +1330,10 @@
             section: 1,
             question: '¿Qué ventaja tiene un pronóstico "bottom-up" (por SKU) frente a uno "top-down" (agregado)?',
             options: [
-                'Siempre es más rápido de calcular',
+                'Siempre resulta más rápido de calcular para toda la red',
                 'Captura mejor el comportamiento particular de cada referencia',
-                'No requiere datos históricos',
-                'Elimina la necesidad de clasificación ABC'
+                'No requiere ningún dato histórico para funcionar',
+                'Elimina por completo la necesidad de clasificación ABC'
             ],
             correct: 1,
             explanation: 'El enfoque bottom-up modela cada SKU según su propio patrón, a costa de mayor esfuerzo de cálculo y mantenimiento.'
@@ -1341,10 +1341,10 @@
             section: 1,
             question: 'Si el Fill Rate de un SKU crítico cae por debajo del objetivo de forma sostenida, ¿qué se debe revisar primero?',
             options: [
-                'Cambiar el nombre del SKU',
-                'La calidad del forecast, el Lead Time y el nivel de buffer/stock de seguridad',
-                'El color de la etiqueta del producto',
-                'Nada, es normal que fluctúe'
+                'El nombre con el que está registrado el SKU',
+                'La calidad del forecast, el Lead Time y el nivel de buffer',
+                'El color de la etiqueta comercial del producto',
+                'Nada, es una fluctuación normal que no requiere revisión'
             ],
             correct: 1,
             explanation: 'Una caída sostenida del Fill Rate suele originarse en forecast, Lead Time o dimensionamiento del inventario de protección.'
@@ -1363,10 +1363,10 @@
             section: 2,
             question: '¿Qué representa el "Decoupling Point" (punto de desacople) en DDMRP?',
             options: [
-                'El punto donde se factura al cliente',
-                'Un punto estratégico de la cadena donde se posiciona inventario para absorber variabilidad y desacoplar la demanda de la oferta',
-                'El punto donde termina la garantía del proveedor',
-                'El almacén más grande de la red'
+                'El punto de la cadena donde se emite la factura al cliente',
+                'Un punto estratégico donde se posiciona inventario para absorber variabilidad',
+                'El punto donde termina la garantía ofrecida por el proveedor',
+                'El almacén de mayor tamaño dentro de toda la red logística'
             ],
             correct: 1,
             explanation: 'Los puntos de desacople amortiguan la variabilidad, evitando que se propague de extremo a extremo de la cadena.'
@@ -1374,10 +1374,10 @@
             section: 2,
             question: '¿Qué es el Net Flow Position (Posición de Flujo Neto)?',
             options: [
-                'El inventario físico únicamente',
+                'El inventario físico disponible en bodega únicamente',
                 'On Hand + Órdenes en tránsito/pedidas − Demanda calificada',
-                'El costo total del inventario',
-                'La suma de todas las ventas del mes'
+                'El costo total acumulado del inventario en la red',
+                'La suma de todas las ventas registradas en el mes'
             ],
             correct: 1,
             explanation: 'El Net Flow Position es la métrica clave de DDMRP para decidir si se debe generar una orden de reposición.'
@@ -1385,10 +1385,10 @@
             section: 2,
             question: '¿Qué es el Order Spike Horizon y por qué es relevante?',
             options: [
-                'El tiempo que tarda un cliente en pagar una factura',
-                'La ventana de tiempo usada para detectar picos anómalos de demanda que podrían agotar el buffer',
-                'El período de garantía del producto',
-                'La fecha límite para hacer devoluciones'
+                'El plazo que tarda un cliente en pagar una factura pendiente',
+                'La ventana de tiempo usada para detectar picos anómalos que podrían agotar el buffer',
+                'El período de garantía comercial ofrecido sobre el producto',
+                'La fecha límite establecida para hacer devoluciones'
             ],
             correct: 1,
             explanation: 'El Order Spike Horizon ayuda a identificar pedidos inusualmente grandes que ameritan ajustar la posición de flujo neto.'
@@ -1396,10 +1396,10 @@
             section: 2,
             question: '¿Qué diferencia hay entre el Lead Time de fabricación y el Lead Time de compra?',
             options: [
-                'Son exactamente lo mismo',
-                'El de fabricación depende de la capacidad interna; el de compra depende del proveedor externo',
-                'El de compra siempre es más corto',
-                'El de fabricación no tiene variabilidad'
+                'Son exactamente lo mismo, solo cambia el nombre',
+                'El de fabricación depende de capacidad interna; el de compra del proveedor externo',
+                'El de compra siempre resulta más corto que el de fabricación',
+                'El de fabricación nunca presenta ningún tipo de variabilidad'
             ],
             correct: 1,
             explanation: 'Cada tipo de Lead Time tiene fuentes de variabilidad distintas y debe analizarse por separado.'
@@ -1407,10 +1407,10 @@
             section: 2,
             question: 'Si dos proveedores tienen el mismo Lead Time promedio pero diferente desviación estándar, ¿cuál requiere más protección?',
             options: [
-                'El de menor desviación estándar',
-                'El de mayor desviación estándar (más variabilidad)',
-                'Ambos requieren la misma protección',
-                'Ninguno, el promedio es lo único relevante'
+                'El que tiene menor desviación estándar',
+                'El que tiene mayor desviación estándar (más variabilidad)',
+                'Ambos requieren exactamente la misma protección',
+                'Ninguno, el promedio es lo único que importa aquí'
             ],
             correct: 1,
             explanation: 'A mayor variabilidad (desviación estándar), mayor es la incertidumbre y, por tanto, la protección necesaria.'
@@ -1418,10 +1418,10 @@
             section: 2,
             question: '¿Qué factores influyen principalmente en el tamaño de la Zona Verde de un buffer?',
             options: [
-                'El color del empaque y el proveedor',
-                'El Lead Time, el ADU y el tamaño mínimo de orden (MOQ) o factores de orden definidos',
-                'Únicamente el precio del producto',
-                'La antigüedad del SKU en el catálogo'
+                'El color del empaque y el nombre del proveedor',
+                'El Lead Time, el ADU y el tamaño mínimo de orden (MOQ)',
+                'Únicamente el precio unitario del producto',
+                'Únicamente la antigüedad del SKU en el catálogo'
             ],
             correct: 1,
             explanation: 'La Zona Verde define la frecuencia/tamaño de las órdenes y depende de Lead Time, ADU y restricciones de compra.'
@@ -1429,10 +1429,10 @@
             section: 3,
             question: 'Dos SKU con el mismo estado de buffer (rojo) pero contextos distintos: ¿qué debe hacer el planeador?',
             options: [
-                'Aplicar la misma acción a ambos automáticamente',
-                'Analizar el contexto de cada uno (causa raíz, criticidad, evidencia) antes de decidir',
-                'Ignorar el de menor precio',
-                'Esperar a que el sistema decida solo'
+                'Aplicar exactamente la misma acción a ambos de forma automática',
+                'Analizar el contexto de cada uno antes de decidir',
+                'Ignorar por completo el de menor precio unitario',
+                'Esperar a que el sistema decida sin ninguna intervención'
             ],
             correct: 1,
             explanation: 'El estado del buffer es una señal, no una decisión automática; el contexto de cada SKU importa.'
@@ -1440,10 +1440,10 @@
             section: 3,
             question: '¿Por qué es importante que una recomendación de IA sea explicable para el planeador?',
             options: [
-                'Porque así se ve más sofisticada',
+                'Porque una recomendación explicable se percibe como más sofisticada',
                 'Porque permite confiar, auditar y corregir la recomendación con criterio humano',
-                'No es importante, solo importa el resultado final',
-                'Porque reduce el tamaño del archivo de datos'
+                'No es realmente importante, solo importa el resultado final',
+                'Porque una explicación reduce el peso del archivo de datos'
             ],
             correct: 1,
             explanation: 'La explicabilidad permite que el planeador entienda el "por qué" y decida con criterio en vez de actuar a ciegas.'
@@ -1451,10 +1451,10 @@
             section: 3,
             question: '¿Cuándo debería un planeador escalar una decisión a un analista senior o especialista?',
             options: [
-                'Nunca, el sistema siempre tiene la razón',
-                'Cuando hay alta incertidumbre, bajo volumen de evidencia o impacto financiero significativo',
-                'Solo si el SKU es de clasificación C',
-                'Solo los viernes'
+                'Nunca, el sistema siempre tiene la razón sobre el planeador',
+                'Cuando hay alta incertidumbre, poca evidencia o impacto financiero significativo',
+                'Únicamente si el SKU tiene clasificación C',
+                'Únicamente los días viernes, por política interna'
             ],
             correct: 1,
             explanation: 'Ante alta incertidumbre o alto impacto, escalar la decisión reduce el riesgo de errores costosos.'
@@ -1462,10 +1462,10 @@
             section: 3,
             question: '¿Para qué sirve revisar el histórico de accuracy del forecast de un SKU?',
             options: [
-                'Para decorar el dashboard',
-                'Para calibrar el nivel de confianza que se le da a las recomendaciones futuras de ese SKU',
-                'No tiene ninguna utilidad práctica',
-                'Solo sirve para fines contables'
+                'Únicamente para efectos visuales del dashboard',
+                'Para calibrar el nivel de confianza en las recomendaciones futuras de ese SKU',
+                'No tiene ninguna utilidad práctica real para el planeador',
+                'Únicamente sirve para fines de reporte contable'
             ],
             correct: 1,
             explanation: 'Un historial de accuracy permite saber cuánto confiar en el forecast de cada SKU y ajustar la protección en consecuencia.'
@@ -1473,10 +1473,10 @@
             section: 3,
             question: 'Ante una recomendación del sistema con alta incertidumbre, ¿cuál es el rol correcto del planeador?',
             options: [
-                'Ejecutarla sin revisar, para ahorrar tiempo',
-                'Evaluarla críticamente, buscar evidencia adicional y decidir con criterio experto',
-                'Rechazarla siempre por principio',
-                'Delegarla a otro compañero sin contexto'
+                'Ejecutarla de inmediato sin revisarla, para ahorrar tiempo',
+                'Evaluarla críticamente y decidir con criterio experto',
+                'Rechazarla siempre, sin importar el contexto',
+                'Delegarla a otro compañero sin darle ningún contexto'
             ],
             correct: 1,
             explanation: 'La Decision Intelligence combina el análisis del sistema con el juicio experto del planeador, especialmente ante incertidumbre.'
@@ -1484,10 +1484,10 @@
             section: 3,
             question: '¿Qué es un "análisis de causa raíz" (root cause analysis) en gestión de inventario?',
             options: [
-                'Un reporte financiero mensual',
-                'Un proceso para identificar la causa real de un problema (ej. quiebre o exceso) en vez de solo tratar el síntoma',
-                'Una técnica exclusiva de manufactura',
-                'Un tipo de auditoría contable'
+                'Un reporte financiero que se genera mensualmente',
+                'Un proceso para identificar la causa real de un problema en vez de solo el síntoma',
+                'Una técnica que se usa exclusivamente en manufactura',
+                'Un tipo particular de auditoría contable interna'
             ],
             correct: 1,
             explanation: 'El análisis de causa raíz busca la razón de fondo de un problema para corregirlo de forma definitiva, no solo su efecto visible.'
