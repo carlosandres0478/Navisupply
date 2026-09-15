@@ -1531,7 +1531,7 @@
         }, {
             title: 'Un solo modelo no sirve para todos los SKU',
             explain: 'No todos los SKU se comportan igual: unos tienen demanda estable, otros estacional, otros intermitente. Usar un único modelo para todos ignora esas diferencias y produce forecasts pobres para muchas referencias.',
-            example: 'Un filtro de aceite de alta rotación se comporta distinto a un sensor específico de un solo modelo de camión: el primero puede usar un promedio móvil simple, el segundo necesita un enfoque distinto o revisión manual.'
+            example: 'El filtro FA-2201 vende 40 unidades/mes de forma estable (encaja con un promedio móvil simple), mientras el sensor SP-5590 solo vende 2-3 unidades cada 4 meses (necesita un modelo de demanda intermitente): usar el mismo modelo para ambos subestimaría uno y sobreestimaría el otro.'
         }, {
             title: 'Demanda intermitente',
             explain: 'La demanda intermitente se caracteriza por muchos períodos sin ventas, intercalados con consumos puntuales, típica de repuestos de baja rotación o repuestos críticos de equipos específicos.',
@@ -1539,7 +1539,7 @@
         }, {
             title: 'El verdadero objetivo de la planeación de inventario',
             explain: 'El objetivo no es minimizar ni maximizar el inventario por sí mismo, sino alcanzar el nivel de servicio requerido usando el capital de la forma más eficiente posible.',
-            example: 'Tener cero quiebres de stock comprando el triple de lo necesario no es "buena planeación", es ineficiente. La meta es el balance: buen servicio al cliente con el capital justo invertido en inventario.'
+            example: 'Si la necesidad real es 100 unidades/mes y el planeador compra 300 "por si acaso" para no quedarse sin stock nunca, logra cero quiebres pero triplica el capital inmovilizado — eso no es buena planeación, es ineficiencia. La meta es el balance: buen servicio con el capital justo.'
         }, {
             title: 'Lead Time más largo, Zona Amarilla más grande',
             explain: 'Como la Zona Amarilla = ADU × Lead Time, cualquier aumento del Lead Time incrementa directamente el inventario necesario para cubrir ese período, incluso si la demanda no cambia.',
@@ -1565,7 +1565,7 @@
         }, {
             title: 'Cuidado al interpretar el FactorVar',
             explain: 'El FactorVar puede estar reflejando volatilidad de la DEMANDA y no necesariamente del Lead Time: confundir ambas fuentes de variabilidad lleva a diagnósticos y ajustes equivocados.',
-            example: 'Un SKU muestra un FactorVar alto; el equipo asume que el proveedor es inconsistente y lo penaliza, cuando en realidad la variabilidad viene de picos de demanda del cliente final, no del tiempo de entrega.'
+            example: 'El SKU X tiene FactorVar=0.85 (alto). El equipo asume que el proveedor es inconsistente y lo penaliza con más buffer, pero al revisar se descubre que el Lead Time es estable (CV=0.05): la variabilidad venía de un pedido puntual de 200 unidades contra un promedio de 20, no del tiempo de entrega.'
         }, {
             title: 'Lead Time estable vs. variable: ¿misma protección?',
             explain: 'No. Un SKU con Lead Time estable necesita menos protección que otro con Lead Time variable, aunque tengan la misma demanda promedio: la incertidumbre del suministro es lo que exige el "colchón" extra.',
@@ -1573,7 +1573,7 @@
         }, {
             title: 'Separar incertidumbre de demanda y de suministro',
             explain: 'Separar ambas fuentes de incertidumbre permite identificar qué está realmente generando la necesidad de protección, y así atacar la causa correcta (mejorar el forecast vs. gestionar al proveedor) en vez de aplicar un colchón genérico.',
-            example: 'Si el buffer de un SKU es grande por alta variabilidad de LEAD TIME, aumentar el buffer no soluciona el problema de fondo: lo que se necesita es negociar con el proveedor o buscar uno más confiable.'
+            example: 'Un SKU tiene un buffer de 800 unidades. Si el 80% de ese tamaño viene de la variabilidad del Lead Time (proveedor con entregas entre 30 y 150 días) y solo el 20% de la variabilidad de demanda, aumentar el buffer no soluciona el problema de fondo: lo que se necesita es negociar un Lead Time más estable con el proveedor.'
         }, {
             title: 'Discontinuidades en los factores de protección',
             explain: 'Cuando los factores de protección cambian abruptamente entre rangos (ej. Corto=0.30, Medio=0.41, Largo=0.75), un SKU que pasa de 75 a 76 días de Lead Time puede saltar de golpe a un nivel de protección mucho mayor: una discontinuidad que no refleja un cambio real proporcional en el riesgo.',
@@ -1593,7 +1593,7 @@
         }, {
             title: 'A igual demanda, más variabilidad exige más protección',
             explain: 'A igual demanda, el SKU con Lead Time variable necesita mayor protección que el de Lead Time estable, porque la incertidumbre de cuándo llegará la reposición es mayor.',
-            example: 'SKU A y B venden lo mismo, pero A tiene un Lead Time casi constante y B fluctúa mucho. B necesitará una Zona Roja más grande para evitar quiebres durante esos períodos de incertidumbre.'
+            example: 'SKU A y B venden ambos 15 unidades/día en promedio. A tiene un Lead Time casi fijo de 30 días; B fluctúa entre 20 y 80 días. Aunque venden lo mismo, B necesitará una Zona Roja notablemente más grande para evitar quiebres durante esos picos de incertidumbre.'
         }, {
             title: 'Inventario cero seguido de una venta: investigar todo',
             explain: 'Ante este patrón hay que investigar TODAS las causas posibles antes de sacar conclusiones: pudo haber stockout, cambio de código de referencia, o simplemente venta perdida no registrada.',
@@ -1621,11 +1621,12 @@
         }, {
             title: 'Riesgo de quiebre alto + evidencia confiable',
             explain: 'Cuando el riesgo de quiebre es alto y la evidencia que lo respalda es confiable, la primera acción del planeador debe ser analizar la oportunidad de reposición: actuar con base en datos sólidos, no ignorar ni sobre-reaccionar.',
-            example: 'Un SKU crítico muestra riesgo de quiebre alto, respaldado por un historial de demanda consistente y un Lead Time bien documentado. Aquí sí tiene sentido priorizar y acelerar la reposición, porque la evidencia es sólida.'
+            example: 'Un SKU crítico tiene Disponible=15, ADU=8 (menos de 2 días de cobertura) y 18 meses de demanda estable con Lead Time consistente de 45 días. Con ese nivel de riesgo y esa calidad de evidencia, el planeador debe priorizar la reposición de inmediato, no esperar el próximo ciclo.'
         }, {
             title: 'Demanda dependiente vs. independiente',
             explain: 'La demanda independiente se pronostica directamente a partir del mercado (lo que compran los clientes); la demanda dependiente se calcula a partir de otra demanda, como los componentes que se necesitan para armar un producto.',
-            example: 'La demanda de camiones completos es independiente (se pronostica según el mercado). La demanda de los filtros que van dentro de cada camión es dependiente: se calcula multiplicando la cantidad de camiones planeados por los filtros que necesita cada uno.'
+            example: 'Si se planean 50 camiones para el próximo trimestre (demanda independiente, se pronostica según el mercado) y cada camión necesita 4 filtros de aceite, la demanda de filtros es dependiente: se calcula 50 × 4 = 200 filtros, no se pronostica por separado.',
+            formula: 'Demanda dependiente = Demanda del componente principal × Cantidad requerida por unidad'
         }, {
             title: 'MAPE: el error porcentual promedio',
             explain: 'El MAPE mide el error porcentual promedio del forecast respecto a la demanda real, sin ponderar por volumen (a diferencia del WAPE). Es útil para comparar la precisión entre SKU de tamaños distintos.',
@@ -1634,7 +1635,7 @@
         }, {
             title: 'Para qué sirve la clasificación ABC',
             explain: 'La clasificación ABC prioriza el esfuerzo de gestión según el impacto de cada SKU (ventas, valor, criticidad), permitiendo enfocar el control fino donde realmente importa, en vez de tratar todos los SKU por igual.',
-            example: 'Los repuestos clase A (alto impacto, ej. filtros de alta rotación) reciben revisión semanal y forecast detallado; los clase C (bajo impacto) se gestionan con reglas simples y menos frecuentes, liberando tiempo del planeador para lo que más importa.'
+            example: 'De 5.000 referencias activas, típicamente el 20% (≈1.000 SKU clase A) representa el 80% del valor de venta y recibe revisión semanal; el 50% restante (clase C, bajo impacto) se gestiona con reglas simples y revisión trimestral — el esfuerzo se concentra donde más impacta.'
         }, {
             title: 'Qué es un stockout',
             explain: 'Un stockout es la ausencia de inventario disponible para atender una demanda existente. Se diferencia de "no tener demanda": el cliente sí quería comprar, pero no había producto disponible.',
@@ -1646,7 +1647,7 @@
         }, {
             title: 'La ventaja del forecast "bottom-up"',
             explain: 'Un pronóstico bottom-up (por SKU) captura mejor el comportamiento particular de cada referencia individual, a diferencia de uno top-down (agregado) que puede ocultar patrones específicos de SKU dentro de un promedio general.',
-            example: 'Un forecast agregado por categoría "filtros" puede verse estable, pero dentro de esa categoría un filtro específico puede estar cayendo en ventas mientras otro crece: el enfoque bottom-up detecta esas diferencias que el agregado esconde.'
+            example: 'El forecast agregado de la categoría "filtros" muestra un total estable de 500 unidades/mes. Pero dentro de esa categoría, el filtro FA-2201 cae de 120 a 80 unidades/mes mientras el FA-3310 sube de 60 a 100: el enfoque bottom-up (por SKU) detecta esas dos señales opuestas que el agregado esconde por completo.'
         }, {
             title: 'Fill Rate bajo sostenido: qué revisar primero',
             explain: 'Ante una caída sostenida del Fill Rate en un SKU crítico, lo primero es revisar la calidad del forecast, el Lead Time real y el nivel de buffer/stock de seguridad, no asumir que "es normal" ni culpar un solo factor sin evidencia.',
@@ -1658,7 +1659,7 @@
         }, {
             title: 'El Decoupling Point (punto de desacople)',
             explain: 'El Decoupling Point es un punto estratégico de la cadena donde se posiciona inventario deliberadamente para absorber la variabilidad y desacoplar la demanda del cliente de la incertidumbre de la oferta (proveedores, producción).',
-            example: 'En lugar de mantener inventario en cada eslabón de la cadena, la empresa decide posicionar el buffer principal solo en la bodega regional: ese es su Decoupling Point, y desde ahí absorbe la variabilidad de todos los puntos aguas abajo.'
+            example: 'En vez de mantener 30 días de inventario en cada una de las 8 bodegas regionales, la empresa concentra un buffer de 45 días solo en el CEDI nacional: ese CEDI es su Decoupling Point, y desde ahí absorbe la variabilidad de las 8 bodegas aguas abajo.'
         }, {
             title: 'Net Flow Position: la métrica central de DDMRP',
             explain: 'El Net Flow Position es la métrica central de DDMRP: inventario disponible + órdenes en tránsito/pedidas − demanda calificada (pedidos confirmados y picos relevantes). Es lo que se compara contra las zonas del buffer para decidir si reponer.',
@@ -1683,7 +1684,7 @@
         }, {
             title: 'Mismo estado de buffer, contexto distinto',
             explain: 'Dos SKU en el mismo estado de buffer (ej. ambos en rojo) pueden requerir acciones distintas según su contexto: causa raíz, criticidad para el cliente, y calidad de la evidencia disponible. El planeador no debe tratarlos igual solo porque coincide el color de alerta.',
-            example: 'Dos repuestos están en Zona Roja. Uno es crítico para un cliente estratégico con evidencia de demanda sólida (prioridad alta); el otro es de bajo impacto y su buffer está mal calibrado (requiere ajuste, no compra urgente). Misma alerta, decisiones distintas.'
+            example: 'Dos repuestos están en Zona Roja con 3 días de cobertura cada uno. El primero vende $2 millones/mes a un cliente estratégico (prioridad alta, comprar ya); el segundo vende $80.000/mes y su buffer está inflado por un pico atípico de hace 6 meses (requiere ajustar el modelo, no comprar urgente). Misma alerta, decisiones distintas.'
         }, {
             title: 'Por qué importa la explicabilidad de la IA',
             explain: 'Que una recomendación de IA sea explicable permite al planeador confiar, auditar y corregir esa recomendación con criterio humano, en vez de seguirla (o rechazarla) a ciegas.',
@@ -1699,11 +1700,11 @@
         }, {
             title: 'El rol del planeador ante alta incertidumbre',
             explain: 'Ante una recomendación con alta incertidumbre, el rol correcto del planeador es evaluarla críticamente, buscar evidencia adicional y decidir con criterio experto: combinando el análisis del sistema con el juicio humano.',
-            example: 'El sistema recomienda una compra grande con "confianza baja". El planeador, en vez de ejecutarla o ignorarla sin más, revisa el contexto comercial (¿hay una promoción próxima? ¿cambió algo con el cliente?) antes de tomar la decisión final.'
+            example: 'El sistema recomienda comprar 600 unidades con confianza BAJA (solo 2 meses de historial). En vez de ejecutar o descartar la recomendación sin más, el planeador revisa el contexto: ¿hay una promoción el próximo mes? ¿el cliente que representa el 70% de esa demanda renovó contrato? — y decide con ese criterio adicional.'
         }, {
             title: 'Análisis de causa raíz (Root Cause Analysis)',
             explain: 'Un análisis de causa raíz busca identificar la razón de fondo de un problema (como un quiebre o un exceso de inventario) en vez de solo tratar su síntoma visible: es la diferencia entre "apagar el incendio" y evitar que vuelva a empezar.',
-            example: 'Un SKU tuvo un quiebre de stock. Tratar el síntoma sería solo comprar más rápido esta vez. Un análisis de causa raíz investiga por qué ocurrió: ¿el Lead Time cambió sin actualizar el buffer? ¿hubo un pico de demanda no detectado? — y corrige la causa real.'
+            example: 'Un SKU tuvo un quiebre de stock 3 veces en 6 meses. Tratar el síntoma sería solo comprar más rápido cada vez. El análisis de causa raíz revisa el histórico y encuentra que el Lead Time del proveedor subió de 45 a 90 días sin que se actualizara el buffer — esa es la causa real, no la velocidad de reposición.'
         }];
 
 
